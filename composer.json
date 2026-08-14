@@ -1,27 +1,28 @@
 {
-    "name": "sidd2604/larakit",
-    "description": "A simple but useful library package that can be used for Search Engine Optimization, Image Optimization, Authencation for super user ( or admin ) and for regular users, Admin Panel for controlling most of the common things which is required in almost every web applications",
-    "type": "library",
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "Sidd2604\\Larakit\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Siddharth Sharma"
-        }
-    ],
-    "minimum-stability": "stable",
-    "require": {
-        "illuminate/support": "^13.25"
-    },
-    "extra": {
-        "laravel":{
-            "providers":[
-                "Sidd2604\\Larakit\\LaraKitServiceProvider"
-            ]
-        }
+  "name": "sidd2604/larakit",
+  "description": "A simple but useful library package that can be used for Search Engine Optimization, Image Optimization, Authencation for super user ( or admin ) and for regular users, Admin Panel for controlling most of the common things which is required in almost every web applications",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Sidd2604\\Larakit\\": "src/"
     }
+  },
+  "authors": [
+    {
+      "name": "Siddharth Sharma"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "illuminate/support": "^13.25",
+    "illuminate/view": "^13.25"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Sidd2604\\Larakit\\LaraKitServiceProvider"
+      ]
+    }
+  }
 }

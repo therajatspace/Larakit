@@ -5,13 +5,16 @@ namespace Sidd2604\Larakit;
 use Illuminate\Support\ServiceProvider;
 use Sidd2604\Larakit\Console\LaraKitWelcome;
 use Sidd2604\Larakit\SEO\SeoManager;
+use Illuminate\Support\Facades\Blade;
 
 
 class LaraKitServiceProvider extends ServiceProvider
 {
     public function register()
     {
-        $this->app->singleton(SeoManager::class, function () {
+        $this->app->singleton(
+            SeoManager::class,
+            function () {
                 return new SeoManager();
             }
         );
@@ -25,5 +28,9 @@ class LaraKitServiceProvider extends ServiceProvider
         ) {
             LaraKitWelcome::show();
         }
+
+        Blade::directive('seo', function () {
+            return "<?php echo app(\Sidd2604\Larakit\SEO\SeoManager::class)->render(); ?>";
+        });
     }
 }

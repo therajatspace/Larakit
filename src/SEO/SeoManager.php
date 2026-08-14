@@ -4,21 +4,18 @@ namespace Sidd2604\Larakit\SEO;
 
 class SeoManager
 {
-    private ?string $title = null;
+    protected ?string $title = null;
 
-    private ?string $description = null;
+    protected ?string $description = null;
 
-    private ?string $canonical = null;
-
-    public function title(string $title): self
+    public function title(string $title): static
     {
         $this->title = $title;
 
         return $this;
     }
 
-
-    public function description(string $description): self
+    public function description(string $description): static
     {
         $this->description = $description;
 
@@ -29,14 +26,14 @@ class SeoManager
     {
         $html = '';
 
-        if ($this->title !== null) {
-            $html .= '<title>' . htmlspecialchars($this->title) . '</title>' . PHP_EOL;
+        if ($this->title) {
+            $html .= '<title>' . htmlspecialchars($this->title) . "</title>\n";
         }
 
-        if ($this->description !== null) {
+        if ($this->description) {
             $html .= '<meta name="description" content="' .
                 htmlspecialchars($this->description) .
-                '">' . PHP_EOL;
+                "\">\n";
         }
 
         return $html;
