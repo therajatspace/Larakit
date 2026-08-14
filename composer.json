@@ -14,5 +14,14 @@
         }
     ],
     "minimum-stability": "stable",
-    "require": {}
+    "require": {
+        "illuminate/support": "^13.25"
+    },
+    "extra": {
+        "laravel":{
+            "providers":[
+                "Sidd2604\\Larakit\\LaraKitServiceProvider"
+            ]
+        }
+    }
 }
