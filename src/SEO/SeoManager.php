@@ -90,7 +90,11 @@ class SeoManager
                 . htmlspecialchars($this->canonical, ENT_QUOTES, 'UTF-8')
                 . "\">\n";
         }
-
+        $this->openGraph->inherit(
+            $this->title,
+            $this->meta['description'] ?? null,
+            $this->canonical
+        );
         $html .= $this->openGraph->render();
 
         return $html;

@@ -12,7 +12,7 @@ class OpenGraphManager
 
     protected ?string $url = null;
 
-    protected ?string $image = null;
+    protected ?array $image = null;
     protected array $allowedTypes = [
         'website',
         'article',
@@ -61,9 +61,38 @@ class OpenGraphManager
         return $this;
     }
 
-    public function image(string $image): static
-    {
-        $this->image = $image;
+    public function image(
+        string $url,
+        ?string $alt = null,
+        ?int $width = null,
+        ?int $height = null
+    ): static {
+        $this->image = [
+            'url' => $url,
+            'alt' => $alt,
+            'width' => $width,
+            'height' => $height,
+        ];
+
+        return $this;
+    }
+
+    public function inherit(
+        ?string $title = null,
+        ?string $description = null,
+        ?string $url = null
+    ): static {
+        if ($this->title === null && $title !== null) {
+            $this->title = $title;
+        }
+
+        if ($this->description === null && $description !== null) {
+            $this->description = $description;
+        }
+
+        if ($this->url === null && $url !== null) {
+            $this->url = $url;
+        }
 
         return $this;
     }
@@ -98,8 +127,26 @@ class OpenGraphManager
 
         if ($this->image) {
             $html .= '<meta property="og:image" content="'
-                . htmlspecialchars($this->image, ENT_QUOTES, 'UTF-8')
+                . htmlspecialchars($this->image['url'], ENT_QUOTES, 'UTF-8')
                 . "\">\n";
+
+            if ($this->image['alt']) {
+                $html .= '<meta property="og:image:alt" content="'
+                    . htmlspecialchars($this->image['alt'], ENT_QUOTES, 'UTF-8')
+                    . "\">\n";
+            }
+
+            if ($this->image['width']) {
+                $html .= '<meta property="og:image:width" content="'
+                    . $this->image['width']
+                    . "\">\n";
+            }
+
+            if ($this->image['height']) {
+                $html .= '<meta property="og:image:height" content="'
+                    . $this->image['height']
+                    . "\">\n";
+            }
         }
 
         return $html;
