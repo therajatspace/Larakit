@@ -12,6 +12,10 @@ class LaraKitServiceProvider extends ServiceProvider
 {
     public function register()
     {
+        $this->mergeConfigFrom(
+            __DIR__ . '/../config/larakit.php',
+            'larakit'
+        );
         $this->app->singleton(
             SeoManager::class,
             function () {
