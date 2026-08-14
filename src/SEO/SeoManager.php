@@ -10,6 +10,19 @@ class SeoManager
 
     protected ?string $canonical = null;
 
+    public function __construct()
+    {
+        $this->title = config('larakit.seo.defaults.title');
+
+        if ($description = config('larakit.seo.defaults.description')) {
+            $this->meta['description'] = $description;
+        }
+
+        if ($robots = config('larakit.seo.defaults.robots')) {
+            $this->meta['robots'] = $robots;
+        }
+    }
+
     public function title(string $title): static
     {
         $this->title = $title;
