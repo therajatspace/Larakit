@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Sidd2604\Larakit\Console\LaraKitWelcome;
 use Sidd2604\Larakit\SEO\SeoManager;
 use Illuminate\Support\Facades\Blade;
+use Sidd2604\Larakit\SEO\OpenGraph\OpenGraphManager;
 
 
 class LaraKitServiceProvider extends ServiceProvider
@@ -16,12 +17,8 @@ class LaraKitServiceProvider extends ServiceProvider
             __DIR__ . '/../config/larakit.php',
             'larakit'
         );
-        $this->app->singleton(
-            SeoManager::class,
-            function () {
-                return new SeoManager();
-            }
-        );
+        $this->app->singleton(SeoManager::class);
+        $this->app->singleton(OpenGraphManager::class);
     }
 
     public function boot()

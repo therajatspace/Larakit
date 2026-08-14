@@ -1,6 +1,8 @@
 <?php
 
 namespace Sidd2604\Larakit\SEO;
+use Sidd2604\Larakit\SEO\OpenGraph\OpenGraphManager;
+
 
 class SeoManager
 {
@@ -9,9 +11,12 @@ class SeoManager
     protected array $meta = [];
 
     protected ?string $canonical = null;
+    protected OpenGraphManager $openGraph;
 
-    public function __construct()
+    public function __construct(OpenGraphManager $openGraph)
     {
+        $this->openGraph = $openGraph;
+
         $this->title = config('larakit.seo.defaults.title');
 
         if ($description = config('larakit.seo.defaults.description')) {
@@ -57,6 +62,10 @@ class SeoManager
 
         return $this;
     }
+    public function openGraph(): OpenGraphManager
+    {
+        return $this->openGraph;
+    }
 
     public function render(): string
     {
@@ -81,6 +90,8 @@ class SeoManager
                 . htmlspecialchars($this->canonical, ENT_QUOTES, 'UTF-8')
                 . "\">\n";
         }
+
+        $html .= $this->openGraph->render();
 
         return $html;
     }
