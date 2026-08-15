@@ -47,4 +47,12 @@ class SchemaObject
     {
         return $this->data;
     }
+    public function fromArray(array $data): static
+    {
+        foreach ($data as $property => $value) {
+            $this->data[$property] = $value;
+        }
+
+        return $this;
+    }
 }

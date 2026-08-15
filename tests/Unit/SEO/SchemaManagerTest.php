@@ -246,4 +246,16 @@ class SchemaManagerTest extends TestCase
 
         $manager->create(\stdClass::class);
     }
+    public function test_factory_rejects_non_existing_class(): void
+    {
+        $this->expectException(
+            \InvalidArgumentException::class
+        );
+
+        $manager = new SchemaManager();
+
+        $manager->create(
+            'Sidd2604\Larakit\SEO\Schema\DoesNotExist'
+        );
+    }
 }

@@ -10,15 +10,28 @@ class SchemaManager
 {
     protected array $schemas = [];
 
+    /**
+     * @template T of SchemaObject
+     *
+     * @param class-string<T> $class
+     *
+     * @return T
+     */
     public function create(string $class = SchemaObject::class): SchemaObject
     {
-        $schema = new $class();
-
-        if (!$schema instanceof SchemaObject) {
+        if (!class_exists($class)) {
             throw new \InvalidArgumentException(
-                "{$class} must extend " . SchemaObject::class
+                "Schema class [{$class}] does not exist."
             );
         }
+
+        if (!is_a($class, SchemaObject::class, true)) {
+            throw new \InvalidArgumentException(
+                "Schema class [{$class}] must extend " . SchemaObject::class
+            );
+        }
+
+        $schema = new $class();
 
         $this->schemas[] = $schema;
 
@@ -35,43 +48,16 @@ class SchemaManager
     }
     public function organization(array $data = []): OrganizationSchema
     {
-        $schema = $this->create(OrganizationSchema::class);
-
-        if (isset($data['name'])) {
-            $schema->name($data['name']);
-        }
-
-        if (isset($data['url'])) {
-            $schema->url($data['url']);
-        }
-
-        if (isset($data['logo'])) {
-            $schema->logo($data['logo']);
-        }
-
-        if (!empty($data['same_as'])) {
-            $schema->sameAs($data['same_as']);
-        }
-
-        return $schema;
+        return $this
+            ->create(OrganizationSchema::class)
+            ->fromArray($data);
     }
+
     public function website(array $data = []): WebSiteSchema
     {
-        $schema = $this->create(WebSiteSchema::class);
-
-        if (isset($data['name'])) {
-            $schema->name($data['name']);
-        }
-
-        if (isset($data['url'])) {
-            $schema->url($data['url']);
-        }
-
-        if (isset($data['description'])) {
-            $schema->description($data['description']);
-        }
-
-        return $schema;
+        return $this
+            ->create(WebSiteSchema::class)
+            ->fromArray($data);
     }
 
     public function count(): int

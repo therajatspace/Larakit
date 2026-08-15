@@ -30,4 +30,24 @@ class OrganizationSchema extends SchemaObject
 
         return $this;
     }
+    public function fromArray(array $data): static
+    {
+        if (isset($data['name'])) {
+            $this->name($data['name']);
+        }
+
+        if (isset($data['url'])) {
+            $this->url($data['url']);
+        }
+
+        if (isset($data['logo'])) {
+            $this->logo($data['logo']);
+        }
+
+        if (!empty($data['same_as'])) {
+            $this->sameAs($data['same_as']);
+        }
+
+        return $this;
+    }
 }
