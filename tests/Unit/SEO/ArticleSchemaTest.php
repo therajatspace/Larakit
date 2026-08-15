@@ -88,4 +88,16 @@ class ArticleSchemaTest extends TestCase
 
         $article->datePublished('banana');
     }
+    public function test_from_array_validates_article_date(): void
+    {
+        $this->expectException(
+            \InvalidArgumentException::class
+        );
+
+        $article = new ArticleSchema();
+
+        $article->fromArray([
+            'datePublished' => 'banana',
+        ]);
+    }
 }

@@ -54,4 +54,40 @@ class ArticleSchema extends SchemaObject
 
         return $this;
     }
+    public function fromArray(array $data): static
+    {
+        if (isset($data['name'])) {
+            $this->name($data['name']);
+        }
+
+        if (isset($data['description'])) {
+            $this->description($data['description']);
+        }
+
+        if (isset($data['url'])) {
+            $this->url($data['url']);
+        }
+
+        if (isset($data['headline'])) {
+            $this->headline($data['headline']);
+        }
+
+        if (isset($data['author'])) {
+            $this->author($data['author']);
+        }
+
+        if (isset($data['datePublished'])) {
+            $this->datePublished($data['datePublished']);
+        }
+
+        if (isset($data['dateModified'])) {
+            $this->dateModified($data['dateModified']);
+        }
+
+        if (isset($data['image'])) {
+            $this->image($data['image']);
+        }
+
+        return $this;
+    }
 }

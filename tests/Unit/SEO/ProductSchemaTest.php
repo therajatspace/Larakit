@@ -131,4 +131,17 @@ class ProductSchemaTest extends TestCase
             $data['url']
         );
     }
+    public function test_from_array_validates_product_image(): void
+    {
+        $this->expectException(
+            \InvalidArgumentException::class
+        );
+
+        $product = new ProductSchema();
+
+        $product->fromArray([
+            'name' => 'iPhone 17',
+            'image' => 'banana',
+        ]);
+    }
 }

@@ -92,4 +92,21 @@ class BreadcrumbSchemaTest extends TestCase
             $result
         );
     }
+    public function test_from_array_validates_breadcrumb_urls(): void
+    {
+        $this->expectException(
+            \InvalidArgumentException::class
+        );
+
+        $breadcrumb = new BreadcrumbSchema();
+
+        $breadcrumb->fromArray([
+            'items' => [
+                [
+                    'name' => 'Home',
+                    'url' => 'banana',
+                ],
+            ],
+        ]);
+    }
 }

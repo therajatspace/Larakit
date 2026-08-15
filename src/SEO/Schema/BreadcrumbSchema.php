@@ -27,4 +27,22 @@ class BreadcrumbSchema extends SchemaObject
 
         return $this;
     }
+    public function fromArray(array $data): static
+    {
+        if (!empty($data['items'])) {
+            foreach ($data['items'] as $item) {
+                if (
+                    isset($item['name']) &&
+                    isset($item['url'])
+                ) {
+                    $this->item(
+                        $item['name'],
+                        $item['url']
+                    );
+                }
+            }
+        }
+
+        return $this;
+    }
 }

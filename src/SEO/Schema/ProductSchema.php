@@ -46,4 +46,36 @@ class ProductSchema extends SchemaObject
 
         return $this;
     }
+    public function fromArray(array $data): static
+    {
+        if (isset($data['name'])) {
+            $this->name($data['name']);
+        }
+
+        if (isset($data['description'])) {
+            $this->description($data['description']);
+        }
+
+        if (isset($data['url'])) {
+            $this->url($data['url']);
+        }
+
+        if (isset($data['image'])) {
+            $this->image($data['image']);
+        }
+
+        if (isset($data['brand'])) {
+            $this->brand($data['brand']);
+        }
+
+        if (isset($data['sku'])) {
+            $this->sku($data['sku']);
+        }
+
+        if (isset($data['offers'])) {
+            $this->offers($data['offers']);
+        }
+
+        return $this;
+    }
 }

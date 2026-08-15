@@ -38,13 +38,17 @@ class SchemaManager
         return $schema;
     }
 
-    public function article(): ArticleSchema
+    public function article(array $data = []): ArticleSchema
     {
-        return $this->create(ArticleSchema::class);
+        return $this
+            ->create(ArticleSchema::class)
+            ->fromArray($data);
     }
-    public function breadcrumbs(): BreadcrumbSchema
+    public function breadcrumbs(array $data = []): BreadcrumbSchema
     {
-        return $this->create(BreadcrumbSchema::class);
+        return $this
+            ->create(BreadcrumbSchema::class)
+            ->fromArray($data);
     }
     public function organization(array $data = []): OrganizationSchema
     {
@@ -60,13 +64,16 @@ class SchemaManager
             ->fromArray($data);
     }
 
+    public function product(array $data = []): ProductSchema
+    {
+        return $this
+            ->create(ProductSchema::class)
+            ->fromArray($data);
+    }
+    
     public function count(): int
     {
         return count($this->schemas);
-    }
-    public function product(): ProductSchema
-    {
-        return $this->create(ProductSchema::class);
     }
 
     public function render(): string
