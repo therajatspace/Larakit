@@ -12,7 +12,7 @@ class OpenGraphManager
 
     protected ?string $url = null;
 
-    protected ?array $image = null;
+    protected array $images = [];
     protected array $allowedTypes = [
         'website',
         'article',
@@ -67,7 +67,25 @@ class OpenGraphManager
         ?int $width = null,
         ?int $height = null
     ): static {
-        $this->image = [
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \InvalidArgumentException(
+                "Invalid Open Graph image URL: {$url}"
+            );
+        }
+
+        if ($width !== null && $width <= 0) {
+            throw new \InvalidArgumentException(
+                'Open Graph image width must be greater than 0.'
+            );
+        }
+
+        if ($height !== null && $height <= 0) {
+            throw new \InvalidArgumentException(
+                'Open Graph image height must be greater than 0.'
+            );
+        }
+
+        $this->images[] = [
             'url' => $url,
             'alt' => $alt,
             'width' => $width,
@@ -125,26 +143,27 @@ class OpenGraphManager
                 . "\">\n";
         }
 
-        if ($this->image) {
+        foreach ($this->images as $image) {
+
             $html .= '<meta property="og:image" content="'
-                . htmlspecialchars($this->image['url'], ENT_QUOTES, 'UTF-8')
+                . htmlspecialchars($image['url'], ENT_QUOTES, 'UTF-8')
                 . "\">\n";
 
-            if ($this->image['alt']) {
+            if ($image['alt']) {
                 $html .= '<meta property="og:image:alt" content="'
-                    . htmlspecialchars($this->image['alt'], ENT_QUOTES, 'UTF-8')
+                    . htmlspecialchars($image['alt'], ENT_QUOTES, 'UTF-8')
                     . "\">\n";
             }
 
-            if ($this->image['width']) {
+            if ($image['width']) {
                 $html .= '<meta property="og:image:width" content="'
-                    . $this->image['width']
+                    . $image['width']
                     . "\">\n";
             }
 
-            if ($this->image['height']) {
+            if ($image['height']) {
                 $html .= '<meta property="og:image:height" content="'
-                    . $this->image['height']
+                    . $image['height']
                     . "\">\n";
             }
         }
