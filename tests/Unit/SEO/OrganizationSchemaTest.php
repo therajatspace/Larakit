@@ -4,6 +4,7 @@ namespace Sidd2604\Larakit\Tests\Unit\SEO;
 
 use PHPUnit\Framework\TestCase;
 use Sidd2604\Larakit\SEO\Schema\OrganizationSchema;
+use Sidd2604\Larakit\SEO\Schema\SchemaManager;
 
 class OrganizationSchemaTest extends TestCase
 {
@@ -73,5 +74,45 @@ class OrganizationSchemaTest extends TestCase
             'https://github.com/example',
             'banana',
         ]);
+    }
+    public function test_organization_can_be_created_from_data(): void
+    {
+        $manager = new SchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+            'url' => 'https://example.com',
+            'logo' => 'https://example.com/logo.png',
+            'same_as' => [
+                'https://github.com/example',
+            ],
+        ]);
+
+        $data = $organization->toArray();
+
+        $this->assertSame(
+            'Organization',
+            $data['@type']
+        );
+
+        $this->assertSame(
+            'LaraKit',
+            $data['name']
+        );
+
+        $this->assertSame(
+            'https://example.com',
+            $data['url']
+        );
+
+        $this->assertSame(
+            'https://example.com/logo.png',
+            $data['logo']
+        );
+
+        $this->assertSame(
+            ['https://github.com/example'],
+            $data['sameAs']
+        );
     }
 }

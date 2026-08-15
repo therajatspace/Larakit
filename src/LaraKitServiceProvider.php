@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Blade;
 use Sidd2604\Larakit\SEO\OpenGraph\OpenGraphManager;
 use Sidd2604\Larakit\SEO\Twitter\TwitterCardManager;
 use Sidd2604\Larakit\SEO\Schema\SchemaManager;
+use Sidd2604\Larakit\SEO\Schema\SchemaConfigurator;
 
 
 class LaraKitServiceProvider extends ServiceProvider
@@ -32,6 +33,16 @@ class LaraKitServiceProvider extends ServiceProvider
         $this->app->singleton(OpenGraphManager::class);
         $this->app->singleton(TwitterCardManager::class);
         $this->app->singleton(SchemaManager::class);
+        $this->app->singleton(SchemaConfigurator::class);
+
+        // $this->app->singleton(
+        //     SchemaConfigurator::class,
+        //     function ($app) {
+        //         return new SchemaConfigurator(
+        //             $app->make(SchemaManager::class)
+        //         );
+        //     }
+        // );
     }
 
     public function boot()
@@ -46,5 +57,7 @@ class LaraKitServiceProvider extends ServiceProvider
         Blade::directive('seo', function () {
             return "<?php echo app(\Sidd2604\Larakit\SEO\SeoManager::class)->render(); ?>";
         });
+
+        // app(SchemaConfigurator::class)->configure();
     }
 }

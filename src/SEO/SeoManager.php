@@ -9,6 +9,8 @@ use Sidd2604\Larakit\SEO\Schema\ArticleSchema;
 use Sidd2604\Larakit\SEO\Schema\BreadcrumbSchema;
 use Sidd2604\Larakit\SEO\Schema\OrganizationSchema;
 use Sidd2604\Larakit\SEO\Schema\WebSiteSchema;
+use Illuminate\Support\Facades\Config;
+use Sidd2604\Larakit\SEO\Schema\SchemaConfigurator;
 
 class SeoManager
 {
@@ -22,16 +24,28 @@ class SeoManager
     protected TwitterCardManager $twitter;
 
     protected SchemaManager $schema;
+    protected SchemaConfigurator $schemaConfigurator;
 
     public function __construct(
         OpenGraphManager $openGraph,
         TwitterCardManager $twitter,
         SchemaManager $schema,
+        SchemaConfigurator $schemaConfigurator,
+
         array $defaults = []
     ) {
         $this->openGraph = $openGraph;
         $this->twitter = $twitter;
         $this->schema = $schema;
+        $this->schemaConfigurator = $schemaConfigurator;
+
+
+
+        //=================== TO BE DELETED========================//
+
+        // if (config('larakit.seo.schema.auto', true)) {
+        //     $this->loadConfiguredSchemas();
+        // }
 
         $this->title = $defaults['title'] ?? null;
 
@@ -106,6 +120,36 @@ class SeoManager
     {
         return $this->schema->website();
     }
+    public function configureSchemas(array $config): static
+    {
+        $this->schemaConfigurator->configure($config);
+
+        return $this;
+    }
+
+
+    // ================ TO BE DELETED========================//
+
+    // protected function loadConfiguredSchemas(): void
+    // {
+    //     $organization = config(
+    //         'larakit.seo.organization',
+    //         []
+    //     );
+
+    //     if (!empty($organization['name'])) {
+    //         $this->schema->organization($organization);
+    //     }
+
+    //     $website = config(
+    //         'larakit.seo.website',
+    //         []
+    //     );
+
+    //     if (!empty($website['name'])) {
+    //         $this->schema->website($website);
+    //     }
+    // }
 
     public function render(): string
     {
