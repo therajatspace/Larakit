@@ -8,6 +8,7 @@ use Sidd2604\Larakit\SEO\SeoManager;
 use Illuminate\Support\Facades\Blade;
 use Sidd2604\Larakit\SEO\OpenGraph\OpenGraphManager;
 use Sidd2604\Larakit\SEO\Twitter\TwitterCardManager;
+use Sidd2604\Larakit\SEO\Schema\SchemaManager;
 
 
 class LaraKitServiceProvider extends ServiceProvider
@@ -23,12 +24,14 @@ class LaraKitServiceProvider extends ServiceProvider
             return new SeoManager(
                 $app->make(OpenGraphManager::class),
                 $app->make(TwitterCardManager::class),
+                $app->make(SchemaManager::class),
                 config('larakit.seo.defaults', [])
             );
         });
 
         $this->app->singleton(OpenGraphManager::class);
         $this->app->singleton(TwitterCardManager::class);
+        $this->app->singleton(SchemaManager::class);
     }
 
     public function boot()

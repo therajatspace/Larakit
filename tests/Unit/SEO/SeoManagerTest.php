@@ -6,11 +6,13 @@ use PHPUnit\Framework\TestCase;
 use Sidd2604\Larakit\SEO\SeoManager;
 use Sidd2604\Larakit\SEO\OpenGraph\OpenGraphManager;
 use Sidd2604\Larakit\SEO\Twitter\TwitterCardManager;
+use Sidd2604\Larakit\SEO\Schema\SchemaManager;
 
 class SeoManagerTest extends TestCase
 {
     protected OpenGraphManager $openGraph;
     protected TwitterCardManager $twitter;
+    protected SchemaManager $schema;
 
     protected function setUp(): void
     {
@@ -25,6 +27,14 @@ class SeoManagerTest extends TestCase
         );
 
         $this->twitter
+            ->method('render')
+            ->willReturn('');
+
+        $this->schema = $this->createStub(
+            SchemaManager::class
+        );
+
+        $this->schema
             ->method('render')
             ->willReturn('');
     }
@@ -47,7 +57,9 @@ class SeoManagerTest extends TestCase
 
         $seo = new SeoManager(
             $this->openGraph,
-            $this->twitter
+            $this->twitter,
+            $this->schema
+
         );
 
         $result = $seo
@@ -75,7 +87,7 @@ class SeoManagerTest extends TestCase
             ->method('render')
             ->willReturn('');
 
-        $seo = new SeoManager($this->openGraph, $this->twitter);
+        $seo = new SeoManager($this->openGraph, $this->twitter, $this->schema);
 
         $seo
             ->description('LaraKit description')
@@ -97,7 +109,7 @@ class SeoManagerTest extends TestCase
             ->method('render')
             ->willReturn('');
 
-        $seo = new SeoManager($this->openGraph, $this->twitter);
+        $seo = new SeoManager($this->openGraph, $this->twitter, $this->schema);
 
         $seo
             ->canonical('https://example.com/larakit')
@@ -119,7 +131,9 @@ class SeoManagerTest extends TestCase
             ->method('render')
             ->willReturn('');
 
-        $seo = new SeoManager($this->openGraph, $this->twitter);
+
+
+        $seo = new SeoManager($this->openGraph, $this->twitter, $this->schema);
 
         $seo
             ->title('LaraKit')
@@ -148,7 +162,9 @@ class SeoManagerTest extends TestCase
             ->method('render')
             ->willReturn('');
 
-        $seo = new SeoManager($this->openGraph, $this->twitter);
+
+
+        $seo = new SeoManager($this->openGraph, $this->twitter, $this->schema);
 
         $seo->title('Normal Title');
 
@@ -190,9 +206,12 @@ class SeoManagerTest extends TestCase
             ->method('render')
             ->willReturn('');
 
+
+
         $seo = new SeoManager(
             $this->openGraph,
-            $this->twitter
+            $this->twitter,
+            $this->schema
         );
 
         $seo

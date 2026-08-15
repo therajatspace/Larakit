@@ -3,7 +3,12 @@
 namespace Sidd2604\Larakit\SEO;
 use Sidd2604\Larakit\SEO\OpenGraph\OpenGraphManager;
 use Sidd2604\Larakit\SEO\Twitter\TwitterCardManager;
-
+use Sidd2604\Larakit\SEO\Schema\SchemaManager;
+use Sidd2604\Larakit\SEO\Schema\SchemaObject;
+use Sidd2604\Larakit\SEO\Schema\ArticleSchema;
+use Sidd2604\Larakit\SEO\Schema\BreadcrumbSchema;
+use Sidd2604\Larakit\SEO\Schema\OrganizationSchema;
+use Sidd2604\Larakit\SEO\Schema\WebSiteSchema;
 
 class SeoManager
 {
@@ -16,29 +21,17 @@ class SeoManager
 
     protected TwitterCardManager $twitter;
 
-    // public function __construct(OpenGraphManager $openGraph)
-    // {
-    //     $this->openGraph = $openGraph;
-
-    //     $this->title = config('larakit.seo.defaults.title');
-
-    //     if ($description = config('larakit.seo.defaults.description')) {
-    //         $this->meta['description'] = $description;
-    //     }
-
-    //     if ($robots = config('larakit.seo.defaults.robots')) {
-    //         $this->meta['robots'] = $robots;
-    //     }
-    // }
+    protected SchemaManager $schema;
 
     public function __construct(
         OpenGraphManager $openGraph,
         TwitterCardManager $twitter,
-
+        SchemaManager $schema,
         array $defaults = []
     ) {
         $this->openGraph = $openGraph;
         $this->twitter = $twitter;
+        $this->schema = $schema;
 
         $this->title = $defaults['title'] ?? null;
 
@@ -93,6 +86,26 @@ class SeoManager
     {
         return $this->twitter;
     }
+    public function schema(): SchemaObject
+    {
+        return $this->schema->create();
+    }
+    public function article(): ArticleSchema
+    {
+        return $this->schema->article();
+    }
+    public function breadcrumbs(): BreadcrumbSchema
+    {
+        return $this->schema->breadcrumbs();
+    }
+    public function organization(): OrganizationSchema
+    {
+        return $this->schema->organization();
+    }
+    public function website(): WebSiteSchema
+    {
+        return $this->schema->website();
+    }
 
     public function render(): string
     {
@@ -131,6 +144,7 @@ class SeoManager
         );
         $html .= $this->openGraph->render();
         $html .= $this->twitter->render();
+        $html .= $this->schema->render();
 
         return $html;
     }
