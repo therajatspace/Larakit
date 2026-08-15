@@ -24,5 +24,11 @@
         "Sidd2604\\Larakit\\LaraKitServiceProvider"
       ]
     }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^12.5"
+  },
+  "scripts": {
+    "test": "phpunit"
   }
 }

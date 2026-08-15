@@ -13,18 +13,35 @@ class SeoManager
     protected ?string $canonical = null;
     protected OpenGraphManager $openGraph;
 
-    public function __construct(OpenGraphManager $openGraph)
-    {
+    // public function __construct(OpenGraphManager $openGraph)
+    // {
+    //     $this->openGraph = $openGraph;
+
+    //     $this->title = config('larakit.seo.defaults.title');
+
+    //     if ($description = config('larakit.seo.defaults.description')) {
+    //         $this->meta['description'] = $description;
+    //     }
+
+    //     if ($robots = config('larakit.seo.defaults.robots')) {
+    //         $this->meta['robots'] = $robots;
+    //     }
+    // }
+
+    public function __construct(
+        OpenGraphManager $openGraph,
+        array $defaults = []
+    ) {
         $this->openGraph = $openGraph;
 
-        $this->title = config('larakit.seo.defaults.title');
+        $this->title = $defaults['title'] ?? null;
 
-        if ($description = config('larakit.seo.defaults.description')) {
-            $this->meta['description'] = $description;
+        if (!empty($defaults['description'])) {
+            $this->meta['description'] = $defaults['description'];
         }
 
-        if ($robots = config('larakit.seo.defaults.robots')) {
-            $this->meta['robots'] = $robots;
+        if (!empty($defaults['robots'])) {
+            $this->meta['robots'] = $defaults['robots'];
         }
     }
 

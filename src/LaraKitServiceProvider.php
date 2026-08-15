@@ -17,7 +17,14 @@ class LaraKitServiceProvider extends ServiceProvider
             __DIR__ . '/../config/larakit.php',
             'larakit'
         );
-        $this->app->singleton(SeoManager::class);
+
+        $this->app->singleton(SeoManager::class, function ($app) {
+            return new SeoManager(
+                $app->make(OpenGraphManager::class),
+                config('larakit.seo.defaults', [])
+            );
+        });
+
         $this->app->singleton(OpenGraphManager::class);
     }
 
