@@ -5,12 +5,14 @@ namespace Sidd2604\Larakit\Tests\Unit\SEO;
 use PHPUnit\Framework\TestCase;
 use Sidd2604\Larakit\SEO\Schema\SchemaManager;
 use Sidd2604\Larakit\SEO\Schema\SchemaObject;
+use Sidd2604\Larakit\SEO\Schema\SchemaContext;
+use Sidd2604\Larakit\SEO\Schema\SchemaRelationshipResolver;
 
 class SchemaManagerTest extends TestCase
 {
     public function test_manager_can_create_schema_object(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $schema = $manager->create();
 
@@ -22,7 +24,7 @@ class SchemaManagerTest extends TestCase
 
     public function test_schema_object_contains_context(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $schema = $manager->create();
 
@@ -36,7 +38,7 @@ class SchemaManagerTest extends TestCase
 
     public function test_schema_object_properties_are_stored(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $schema = $manager->create();
 
@@ -47,12 +49,21 @@ class SchemaManagerTest extends TestCase
             ->url('https://example.com')
             ->toArray();
 
-        $this->assertSame('Article', $data['@type']);
-        $this->assertSame('LaraKit', $data['name']);
+        $this->assertSame(
+            'Article',
+            $data['@type']
+        );
+
+        $this->assertSame(
+            'LaraKit',
+            $data['name']
+        );
+
         $this->assertSame(
             'A Laravel SEO package.',
             $data['description']
         );
+
         $this->assertSame(
             'https://example.com',
             $data['url']
@@ -61,7 +72,7 @@ class SchemaManagerTest extends TestCase
 
     public function test_custom_property_is_stored(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $schema = $manager->create();
 
@@ -84,7 +95,7 @@ class SchemaManagerTest extends TestCase
 
     public function test_schema_is_rendered_as_json_ld(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $manager
             ->create()
@@ -111,7 +122,7 @@ class SchemaManagerTest extends TestCase
 
     public function test_multiple_schema_objects_are_rendered(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $manager
             ->create()
@@ -126,11 +137,16 @@ class SchemaManagerTest extends TestCase
         $result = $manager->render();
 
         $this->assertSame(
-            2,
+            1,
             substr_count(
                 $result,
                 '<script type="application/ld+json">'
             )
+        );
+
+        $this->assertStringContainsString(
+            '"@graph"',
+            $result
         );
 
         $this->assertStringContainsString(
@@ -146,7 +162,7 @@ class SchemaManagerTest extends TestCase
 
     public function test_schema_objects_are_independent(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $article = $manager
             ->create()
@@ -176,9 +192,10 @@ class SchemaManagerTest extends TestCase
             $organizationData['@type']
         );
     }
+
     public function test_nested_schema_property_is_valid_json(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $manager
             ->create()
@@ -208,19 +225,22 @@ class SchemaManagerTest extends TestCase
             json_last_error()
         );
 
+        $article = $data['@graph'][0];
+
         $this->assertSame(
             'Person',
-            $data['author']['@type']
+            $article['author']['@type']
         );
 
         $this->assertSame(
             'Siddharth',
-            $data['author']['name']
+            $article['author']['name']
         );
     }
+
     public function test_manager_can_create_schema_using_class_name(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $schema = $manager->create(
             \Sidd2604\Larakit\SEO\Schema\ProductSchema::class
@@ -236,26 +256,267 @@ class SchemaManagerTest extends TestCase
             $manager->count()
         );
     }
+
     public function test_factory_rejects_non_schema_class(): void
     {
         $this->expectException(
             \InvalidArgumentException::class
         );
 
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $manager->create(\stdClass::class);
     }
+
     public function test_factory_rejects_non_existing_class(): void
     {
         $this->expectException(
             \InvalidArgumentException::class
         );
 
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $manager->create(
             'Sidd2604\Larakit\SEO\Schema\DoesNotExist'
+        );
+    }
+
+    public function test_manager_can_generate_global_schema_id(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $this->assertSame(
+            'https://example.com/#organization',
+            $manager->id('organization')
+        );
+    }
+
+    public function test_manager_can_generate_current_page_schema_id(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $this->assertSame(
+            'https://example.com/test/#article',
+            $manager->pageId('article')
+        );
+    }
+
+    public function test_organization_gets_automatic_id(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization();
+
+        $this->assertSame(
+            'https://example.com/#organization',
+            $organization->toArray()['@id']
+        );
+    }
+
+    public function test_website_gets_automatic_id(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $website = $manager->website();
+
+        $this->assertSame(
+            'https://example.com/#website',
+            $website->toArray()['@id']
+        );
+    }
+
+    public function test_article_gets_automatic_page_id(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $article = $manager->article();
+
+        $this->assertSame(
+            'https://example.com/test/#article',
+            $article->toArray()['@id']
+        );
+    }
+
+    public function test_product_gets_automatic_page_id(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $product = $manager->product();
+
+        $this->assertSame(
+            'https://example.com/test/#product',
+            $product->toArray()['@id']
+        );
+    }
+
+    public function test_breadcrumb_gets_automatic_page_id(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $breadcrumb = $manager->breadcrumbs();
+
+        $this->assertSame(
+            'https://example.com/test/#breadcrumb',
+            $breadcrumb->toArray()['@id']
+        );
+    }
+
+    protected function createSchemaManager(): SchemaManager
+    {
+        return new SchemaManager(
+            new SchemaContext(
+                'https://example.com',
+                'https://example.com/test'
+            ),
+            new SchemaRelationshipResolver()
+        );
+    }
+
+    public function test_schemas_can_be_connected(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $website = $manager->website([
+            'name' => 'LaraKit',
+        ]);
+
+        $manager->connect(
+            $website,
+            'publisher',
+            $organization
+        );
+
+        $data = $website->toArray();
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#organization',
+            ],
+            $data['publisher']
+        );
+    }
+
+    public function test_website_is_automatically_connected_to_organization(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $website = $manager->website([
+            'name' => 'LaraKit',
+        ]);
+
+        $manager->render();
+
+        $this->assertSame(
+            [
+                '@id' => $organization->toArray()['@id'],
+            ],
+            $website->toArray()['publisher']
+        );
+    }
+
+    public function test_article_is_automatically_connected_to_organization(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $article = $manager->article([
+            'headline' => 'Laravel SEO',
+        ]);
+
+        $manager->render();
+
+        $this->assertSame(
+            [
+                '@id' => $organization->toArray()['@id'],
+            ],
+            $article->toArray()['publisher']
+        );
+    }
+
+    public function test_article_is_automatically_connected_to_website(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $website = $manager->website([
+            'name' => 'LaraKit',
+        ]);
+
+        $article = $manager->article([
+            'headline' => 'Laravel SEO',
+        ]);
+
+        $manager->render();
+
+        $this->assertSame(
+            [
+                '@id' => $website->toArray()['@id'],
+            ],
+            $article->toArray()['isPartOf']
+        );
+    }
+
+    public function test_article_without_organization_has_no_publisher(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $article = $manager->article([
+            'headline' => 'Laravel SEO',
+        ]);
+
+        $manager->render();
+
+        $this->assertArrayNotHasKey(
+            'publisher',
+            $article->toArray()
+        );
+    }
+
+    public function test_article_without_website_has_no_is_part_of(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $article = $manager->article([
+            'headline' => 'Laravel SEO',
+        ]);
+
+        $manager->render();
+
+        $this->assertArrayNotHasKey(
+            'isPartOf',
+            $article->toArray()
+        );
+    }
+
+    public function test_schemas_without_ids_are_not_automatically_connected(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager
+            ->create()
+            ->type('Organization')
+            ->name('LaraKit');
+
+        $article = $manager
+            ->create()
+            ->type('Article')
+            ->name('LaraKit Article');
+
+        $manager->render();
+
+        $this->assertArrayNotHasKey(
+            'publisher',
+            $article->toArray()
         );
     }
 }

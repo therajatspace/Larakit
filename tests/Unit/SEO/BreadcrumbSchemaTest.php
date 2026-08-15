@@ -5,6 +5,8 @@ namespace Sidd2604\Larakit\Tests\Unit\SEO;
 use PHPUnit\Framework\TestCase;
 use Sidd2604\Larakit\SEO\Schema\BreadcrumbSchema;
 use Sidd2604\Larakit\SEO\Schema\SchemaManager;
+use Sidd2604\Larakit\SEO\Schema\SchemaContext;
+use Sidd2604\Larakit\SEO\Schema\SchemaRelationshipResolver;
 
 class BreadcrumbSchemaTest extends TestCase
 {
@@ -15,6 +17,17 @@ class BreadcrumbSchemaTest extends TestCase
         $this->assertSame(
             'BreadcrumbList',
             $breadcrumb->toArray()['@type']
+        );
+    }
+
+    protected function createSchemaManager(): SchemaManager
+    {
+        return new SchemaManager(
+            new SchemaContext(
+                'https://example.com',
+                'https://example.com/test'
+            ),
+            new SchemaRelationshipResolver()
         );
     }
 
@@ -63,7 +76,7 @@ class BreadcrumbSchemaTest extends TestCase
 
     public function test_breadcrumb_items_are_rendered_as_json_ld(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $manager
             ->breadcrumbs()
@@ -92,6 +105,7 @@ class BreadcrumbSchemaTest extends TestCase
             $result
         );
     }
+
     public function test_from_array_validates_breadcrumb_urls(): void
     {
         $this->expectException(

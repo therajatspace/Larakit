@@ -90,4 +90,20 @@ class ArticleSchema extends SchemaObject
 
         return $this;
     }
+    public function publisher(string $id): static
+    {
+        $this->data['publisher'] = [
+            '@id' => $id,
+        ];
+
+        return $this;
+    }
+    public function isPartOf(string $id): static
+    {
+        $this->data['isPartOf'] = [
+            '@id' => $id,
+        ];
+
+        return $this;
+    }
 }

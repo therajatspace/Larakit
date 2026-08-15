@@ -5,6 +5,8 @@ namespace Sidd2604\Larakit\Tests\Unit\SEO;
 use PHPUnit\Framework\TestCase;
 use Sidd2604\Larakit\SEO\Schema\WebSiteSchema;
 use Sidd2604\Larakit\SEO\Schema\SchemaManager;
+use Sidd2604\Larakit\SEO\Schema\SchemaContext;
+use Sidd2604\Larakit\SEO\Schema\SchemaRelationshipResolver;
 
 class WebSiteSchemaTest extends TestCase
 {
@@ -28,7 +30,10 @@ class WebSiteSchemaTest extends TestCase
             ->url('https://example.com')
             ->toArray();
 
-        $this->assertSame('LaraKit', $data['name']);
+        $this->assertSame(
+            'LaraKit',
+            $data['name']
+        );
 
         $this->assertSame(
             'Laravel SEO toolkit',
@@ -40,9 +45,10 @@ class WebSiteSchemaTest extends TestCase
             $data['url']
         );
     }
+
     public function test_website_can_be_created_from_data(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $website = $manager->website([
             'name' => 'LaraKit',
@@ -70,6 +76,33 @@ class WebSiteSchemaTest extends TestCase
         $this->assertSame(
             'Laravel SEO toolkit',
             $data['description']
+        );
+    }
+
+    public function test_website_can_reference_publisher(): void
+    {
+        $website = new WebSiteSchema();
+
+        $data = $website
+            ->publisher('https://example.com/#organization')
+            ->toArray();
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#organization',
+            ],
+            $data['publisher']
+        );
+    }
+
+    protected function createSchemaManager(): SchemaManager
+    {
+        return new SchemaManager(
+            new SchemaContext(
+                'https://example.com',
+                'https://example.com/test'
+            ),
+            new SchemaRelationshipResolver()
         );
     }
 }

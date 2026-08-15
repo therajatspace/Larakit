@@ -5,6 +5,8 @@ namespace Sidd2604\Larakit\Tests\Unit\SEO;
 use PHPUnit\Framework\TestCase;
 use Sidd2604\Larakit\SEO\Schema\OrganizationSchema;
 use Sidd2604\Larakit\SEO\Schema\SchemaManager;
+use Sidd2604\Larakit\SEO\Schema\SchemaContext;
+use Sidd2604\Larakit\SEO\Schema\SchemaRelationshipResolver;
 
 class OrganizationSchemaTest extends TestCase
 {
@@ -15,6 +17,17 @@ class OrganizationSchemaTest extends TestCase
         $this->assertSame(
             'Organization',
             $organization->toArray()['@type']
+        );
+    }
+
+    protected function createSchemaManager(): SchemaManager
+    {
+        return new SchemaManager(
+            new SchemaContext(
+                'https://example.com',
+                'https://example.com/test'
+            ),
+            new SchemaRelationshipResolver()
         );
     }
 
@@ -75,9 +88,10 @@ class OrganizationSchemaTest extends TestCase
             'banana',
         ]);
     }
+
     public function test_organization_can_be_created_from_data(): void
     {
-        $manager = new SchemaManager();
+        $manager = $this->createSchemaManager();
 
         $organization = $manager->organization([
             'name' => 'LaraKit',

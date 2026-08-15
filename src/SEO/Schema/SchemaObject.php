@@ -55,4 +55,24 @@ class SchemaObject
 
         return $this;
     }
+    public function id(string $id): static
+    {
+        $this->data['@id'] = $id;
+
+        return $this;
+    }
+    public function reference(string $id): array
+    {
+        return [
+            '@id' => $id,
+        ];
+    }
+    public function ref(string $id): SchemaReference
+    {
+        return new SchemaReference($id);
+    }
+    public function hasId(): bool
+    {
+        return isset($this->data['@id']);
+    }
 }

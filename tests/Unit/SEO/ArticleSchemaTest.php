@@ -100,4 +100,35 @@ class ArticleSchemaTest extends TestCase
             'datePublished' => 'banana',
         ]);
     }
+    public function test_article_can_reference_publisher(): void
+    {
+        $article = new ArticleSchema();
+
+        $data = $article
+            ->publisher('https://example.com/#organization')
+            ->toArray();
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#organization',
+            ],
+            $data['publisher']
+        );
+    }
+
+    public function test_article_can_reference_website(): void
+    {
+        $article = new ArticleSchema();
+
+        $data = $article
+            ->isPartOf('https://example.com/#website')
+            ->toArray();
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#website',
+            ],
+            $data['isPartOf']
+        );
+    }
 }

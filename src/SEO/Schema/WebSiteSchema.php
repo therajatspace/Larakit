@@ -24,4 +24,12 @@ class WebSiteSchema extends SchemaObject
 
         return $this;
     }
+    public function publisher(string $id): static
+    {
+        $this->data['publisher'] = [
+            '@id' => $id,
+        ];
+
+        return $this;
+    }
 }

@@ -5,6 +5,8 @@ namespace Sidd2604\Larakit\Tests\Unit\SEO;
 use PHPUnit\Framework\TestCase;
 use Sidd2604\Larakit\SEO\Schema\SchemaConfigurator;
 use Sidd2604\Larakit\SEO\Schema\SchemaManager;
+use Sidd2604\Larakit\SEO\Schema\SchemaContext;
+use Sidd2604\Larakit\SEO\Schema\SchemaRelationshipResolver;
 
 class SchemaConfiguratorTest extends TestCase
 {
@@ -16,7 +18,7 @@ class SchemaConfiguratorTest extends TestCase
     {
         parent::setUp();
 
-        $this->schema = new SchemaManager();
+        $this->schema = $this->createSchemaManager();
 
         $this->configurator = new SchemaConfigurator(
             $this->schema
@@ -117,6 +119,17 @@ class SchemaConfiguratorTest extends TestCase
         $this->assertSame(
             0,
             $this->schema->count()
+        );
+    }
+
+    protected function createSchemaManager(): SchemaManager
+    {
+        return new SchemaManager(
+            new SchemaContext(
+                'https://example.com',
+                'https://example.com/test'
+            ),
+            new SchemaRelationshipResolver()
         );
     }
 }
