@@ -94,6 +94,10 @@ class OpenGraphManager
 
         return $this;
     }
+    public function getFirstImage(): ?array
+    {
+        return $this->images[0] ?? null;
+    }
 
     public function inherit(
         ?string $title = null,

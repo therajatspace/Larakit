@@ -2,6 +2,7 @@
 
 namespace Sidd2604\Larakit\SEO;
 use Sidd2604\Larakit\SEO\OpenGraph\OpenGraphManager;
+use Sidd2604\Larakit\SEO\Twitter\TwitterCardManager;
 
 
 class SeoManager
@@ -12,6 +13,8 @@ class SeoManager
 
     protected ?string $canonical = null;
     protected OpenGraphManager $openGraph;
+
+    protected TwitterCardManager $twitter;
 
     // public function __construct(OpenGraphManager $openGraph)
     // {
@@ -30,9 +33,12 @@ class SeoManager
 
     public function __construct(
         OpenGraphManager $openGraph,
+        TwitterCardManager $twitter,
+
         array $defaults = []
     ) {
         $this->openGraph = $openGraph;
+        $this->twitter = $twitter;
 
         $this->title = $defaults['title'] ?? null;
 
@@ -83,6 +89,10 @@ class SeoManager
     {
         return $this->openGraph;
     }
+    public function twitter(): TwitterCardManager
+    {
+        return $this->twitter;
+    }
 
     public function render(): string
     {
@@ -112,7 +122,15 @@ class SeoManager
             $this->meta['description'] ?? null,
             $this->canonical
         );
+        $this->twitter->inherit(
+            $this->title,
+            $this->meta['description'] ?? null
+        );
+        $this->twitter->inheritImage(
+            $this->openGraph->getFirstImage()
+        );
         $html .= $this->openGraph->render();
+        $html .= $this->twitter->render();
 
         return $html;
     }
