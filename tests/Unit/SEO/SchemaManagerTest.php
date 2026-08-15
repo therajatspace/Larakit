@@ -218,4 +218,32 @@ class SchemaManagerTest extends TestCase
             $data['author']['name']
         );
     }
+    public function test_manager_can_create_schema_using_class_name(): void
+    {
+        $manager = new SchemaManager();
+
+        $schema = $manager->create(
+            \Sidd2604\Larakit\SEO\Schema\ProductSchema::class
+        );
+
+        $this->assertInstanceOf(
+            \Sidd2604\Larakit\SEO\Schema\ProductSchema::class,
+            $schema
+        );
+
+        $this->assertSame(
+            1,
+            $manager->count()
+        );
+    }
+    public function test_factory_rejects_non_schema_class(): void
+    {
+        $this->expectException(
+            \InvalidArgumentException::class
+        );
+
+        $manager = new SchemaManager();
+
+        $manager->create(\stdClass::class);
+    }
 }

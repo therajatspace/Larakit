@@ -11,6 +11,7 @@ use Sidd2604\Larakit\SEO\Schema\OrganizationSchema;
 use Sidd2604\Larakit\SEO\Schema\WebSiteSchema;
 use Illuminate\Support\Facades\Config;
 use Sidd2604\Larakit\SEO\Schema\SchemaConfigurator;
+use Sidd2604\Larakit\SEO\Schema\ProductSchema;
 
 class SeoManager
 {
@@ -125,6 +126,11 @@ class SeoManager
         $this->schemaConfigurator->configure($config);
 
         return $this;
+    }
+
+    public function product(): ProductSchema
+    {
+        return $this->schema->product();
     }
 
 
