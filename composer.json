@@ -1,11 +1,11 @@
 {
-  "name": "sidd2604/larakit",
-  "description": "A simple but useful library package that can be used for Search Engine Optimization, Image Optimization, Authencation for super user ( or admin ) and for regular users, Admin Panel for controlling most of the common things which is required in almost every web applications",
+  "name": "therajatspace/larakit",
+  "description": "A Laravel package providing reusable SEO utilities including meta tags, Open Graph, Twitter Cards, and JSON-LD structured data.",
   "type": "library",
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Sidd2604\\Larakit\\": "src/"
+      "Therajatspace\\Larakit\\": "src/"
     }
   },
   "authors": [
@@ -15,13 +15,14 @@
   ],
   "minimum-stability": "stable",
   "require": {
+    "php": "^8.3",
     "illuminate/support": "^13.25",
     "illuminate/view": "^13.25"
   },
   "extra": {
     "laravel": {
       "providers": [
-        "Sidd2604\\Larakit\\LaraKitServiceProvider"
+        "Therajatspace\\Larakit\\LaraKitServiceProvider"
       ]
     }
   },

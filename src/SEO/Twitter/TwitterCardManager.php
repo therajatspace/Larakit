@@ -1,6 +1,6 @@
 <?php
 
-namespace Sidd2604\Larakit\SEO\Twitter;
+namespace Therajatspace\Larakit\SEO\Twitter;
 
 class TwitterCardManager
 {

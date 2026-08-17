@@ -1,12 +1,12 @@
 <?php
 
-namespace Sidd2604\Larakit\Tests\Unit\SEO;
+namespace Therajatspace\Larakit\Tests\Unit\SEO;
 
 use PHPUnit\Framework\TestCase;
-use Sidd2604\Larakit\SEO\Schema\BreadcrumbSchema;
-use Sidd2604\Larakit\SEO\Schema\SchemaManager;
-use Sidd2604\Larakit\SEO\Schema\SchemaContext;
-use Sidd2604\Larakit\SEO\Schema\SchemaRelationshipResolver;
+use Therajatspace\Larakit\SEO\Schema\BreadcrumbSchema;
+use Therajatspace\Larakit\SEO\Schema\SchemaManager;
+use Therajatspace\Larakit\SEO\Schema\SchemaContext;
+use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
 
 class BreadcrumbSchemaTest extends TestCase
 {

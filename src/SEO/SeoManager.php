@@ -1,17 +1,17 @@
 <?php
 
-namespace Sidd2604\Larakit\SEO;
-use Sidd2604\Larakit\SEO\OpenGraph\OpenGraphManager;
-use Sidd2604\Larakit\SEO\Twitter\TwitterCardManager;
-use Sidd2604\Larakit\SEO\Schema\SchemaManager;
-use Sidd2604\Larakit\SEO\Schema\SchemaObject;
-use Sidd2604\Larakit\SEO\Schema\ArticleSchema;
-use Sidd2604\Larakit\SEO\Schema\BreadcrumbSchema;
-use Sidd2604\Larakit\SEO\Schema\OrganizationSchema;
-use Sidd2604\Larakit\SEO\Schema\WebSiteSchema;
+namespace Therajatspace\Larakit\SEO;
+use Therajatspace\Larakit\SEO\OpenGraph\OpenGraphManager;
+use Therajatspace\Larakit\SEO\Twitter\TwitterCardManager;
+use Therajatspace\Larakit\SEO\Schema\SchemaManager;
+use Therajatspace\Larakit\SEO\Schema\SchemaObject;
+use Therajatspace\Larakit\SEO\Schema\ArticleSchema;
+use Therajatspace\Larakit\SEO\Schema\BreadcrumbSchema;
+use Therajatspace\Larakit\SEO\Schema\OrganizationSchema;
+use Therajatspace\Larakit\SEO\Schema\WebSiteSchema;
 use Illuminate\Support\Facades\Config;
-use Sidd2604\Larakit\SEO\Schema\SchemaConfigurator;
-use Sidd2604\Larakit\SEO\Schema\ProductSchema;
+use Therajatspace\Larakit\SEO\Schema\SchemaConfigurator;
+use Therajatspace\Larakit\SEO\Schema\ProductSchema;
 
 class SeoManager
 {

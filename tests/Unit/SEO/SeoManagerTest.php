@@ -1,14 +1,14 @@
 <?php
 
-namespace Sidd2604\Larakit\Tests\Unit\SEO;
+namespace Therajatspace\Larakit\Tests\Unit\SEO;
 
 use PHPUnit\Framework\TestCase;
-use Sidd2604\Larakit\SEO\SeoManager;
-use Sidd2604\Larakit\SEO\OpenGraph\OpenGraphManager;
-use Sidd2604\Larakit\SEO\Twitter\TwitterCardManager;
-use Sidd2604\Larakit\SEO\Schema\SchemaManager;
+use Therajatspace\Larakit\SEO\SeoManager;
+use Therajatspace\Larakit\SEO\OpenGraph\OpenGraphManager;
+use Therajatspace\Larakit\SEO\Twitter\TwitterCardManager;
+use Therajatspace\Larakit\SEO\Schema\SchemaManager;
 use Illuminate\Support\Facades\Config;
-use Sidd2604\Larakit\SEO\Schema\SchemaConfigurator;
+use Therajatspace\Larakit\SEO\Schema\SchemaConfigurator;
 
 class SeoManagerTest extends TestCase
 {

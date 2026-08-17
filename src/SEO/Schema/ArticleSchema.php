@@ -1,8 +1,8 @@
 <?php
 
-namespace Sidd2604\Larakit\SEO\Schema;
-use Sidd2604\Larakit\SEO\Support\UrlValidator;
-use Sidd2604\Larakit\SEO\Support\DateValidator;
+namespace Therajatspace\Larakit\SEO\Schema;
+use Therajatspace\Larakit\SEO\Support\UrlValidator;
+use Therajatspace\Larakit\SEO\Support\DateValidator;
 
 class ArticleSchema extends SchemaObject
 {

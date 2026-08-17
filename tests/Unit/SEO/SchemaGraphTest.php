@@ -1,11 +1,11 @@
 <?php
 
-namespace Sidd2604\Larakit\Tests\Unit\SEO;
+namespace Therajatspace\Larakit\Tests\Unit\SEO;
 
 use PHPUnit\Framework\TestCase;
-use Sidd2604\Larakit\SEO\Schema\SchemaGraph;
-use Sidd2604\Larakit\SEO\Schema\OrganizationSchema;
-use Sidd2604\Larakit\SEO\Schema\WebSiteSchema;
+use Therajatspace\Larakit\SEO\Schema\SchemaGraph;
+use Therajatspace\Larakit\SEO\Schema\OrganizationSchema;
+use Therajatspace\Larakit\SEO\Schema\WebSiteSchema;
 
 class SchemaGraphTest extends TestCase
 {

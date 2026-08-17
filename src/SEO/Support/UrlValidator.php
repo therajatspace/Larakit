@@ -1,6 +1,6 @@
 <?php
 
-namespace Sidd2604\Larakit\SEO\Support;
+namespace Therajatspace\Larakit\SEO\Support;
 
 class UrlValidator
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Sidd2604\Larakit\Console;
+namespace Therajatspace\Larakit\Console;
 
 class LaraKitWelcome
 {

@@ -1,17 +1,17 @@
 <?php
 
-namespace Sidd2604\Larakit;
+namespace Therajatspace\Larakit;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
-use Sidd2604\Larakit\Console\LaraKitWelcome;
-use Sidd2604\Larakit\SEO\OpenGraph\OpenGraphManager;
-use Sidd2604\Larakit\SEO\Schema\SchemaConfigurator;
-use Sidd2604\Larakit\SEO\Schema\SchemaContext;
-use Sidd2604\Larakit\SEO\Schema\SchemaManager;
-use Sidd2604\Larakit\SEO\Schema\SchemaRelationshipResolver;
-use Sidd2604\Larakit\SEO\SeoManager;
-use Sidd2604\Larakit\SEO\Twitter\TwitterCardManager;
+use Therajatspace\Larakit\Console\LaraKitWelcome;
+use Therajatspace\Larakit\SEO\OpenGraph\OpenGraphManager;
+use Therajatspace\Larakit\SEO\Schema\SchemaConfigurator;
+use Therajatspace\Larakit\SEO\Schema\SchemaContext;
+use Therajatspace\Larakit\SEO\Schema\SchemaManager;
+use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
+use Therajatspace\Larakit\SEO\SeoManager;
+use Therajatspace\Larakit\SEO\Twitter\TwitterCardManager;
 
 class LaraKitServiceProvider extends ServiceProvider
 {
@@ -105,7 +105,7 @@ class LaraKitServiceProvider extends ServiceProvider
         }
 
         Blade::directive('seo', function () {
-            return "<?php echo app(\Sidd2604\Larakit\SEO\SeoManager::class)->render(); ?>";
+            return "<?php echo app(\Therajatspace\Larakit\SEO\SeoManager::class)->render(); ?>";
         });
     }
 }

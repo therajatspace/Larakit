@@ -1,12 +1,12 @@
 <?php
 
-namespace Sidd2604\Larakit\SEO\Schema;
-use Sidd2604\Larakit\SEO\Schema\BreadcrumbSchema;
-use Sidd2604\Larakit\SEO\Schema\OrganizationSchema;
-use Sidd2604\Larakit\SEO\Schema\WebSiteSchema;
-use Sidd2604\Larakit\SEO\Schema\ProductSchema;
-use Sidd2604\Larakit\SEO\Schema\SchemaObject;
-use Sidd2604\Larakit\SEO\Schema\SchemaRelationshipResolver;
+namespace Therajatspace\Larakit\SEO\Schema;
+use Therajatspace\Larakit\SEO\Schema\BreadcrumbSchema;
+use Therajatspace\Larakit\SEO\Schema\OrganizationSchema;
+use Therajatspace\Larakit\SEO\Schema\WebSiteSchema;
+use Therajatspace\Larakit\SEO\Schema\ProductSchema;
+use Therajatspace\Larakit\SEO\Schema\SchemaObject;
+use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
 
 class SchemaManager
 {

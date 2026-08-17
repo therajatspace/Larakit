@@ -1,9 +1,9 @@
 <?php
 
-namespace Sidd2604\Larakit\Tests\Unit\SEO\Support;
+namespace Therajatspace\Larakit\Tests\Unit\SEO\Support;
 
 use PHPUnit\Framework\TestCase;
-use Sidd2604\Larakit\SEO\Support\UrlValidator;
+use Therajatspace\Larakit\SEO\Support\UrlValidator;
 
 class UrlValidatorTest extends TestCase
 {

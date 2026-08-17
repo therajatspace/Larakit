@@ -1,9 +1,9 @@
 <?php
 
-namespace Sidd2604\Larakit\Tests\Unit\SEO;
+namespace Therajatspace\Larakit\Tests\Unit\SEO;
 
 use PHPUnit\Framework\TestCase;
-use Sidd2604\Larakit\SEO\Schema\ProductSchema;
+use Therajatspace\Larakit\SEO\Schema\ProductSchema;
 
 class ProductSchemaTest extends TestCase
 {

@@ -1,7 +1,7 @@
 <?php
 
-namespace Sidd2604\Larakit\SEO\Schema;
-use Sidd2604\Larakit\SEO\Support\UrlValidator;
+namespace Therajatspace\Larakit\SEO\Schema;
+use Therajatspace\Larakit\SEO\Support\UrlValidator;
 
 class BreadcrumbSchema extends SchemaObject
 {

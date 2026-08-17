@@ -1,9 +1,9 @@
 <?php
 
-namespace Sidd2604\Larakit\Tests\Unit\SEO\Support;
+namespace Therajatspace\Larakit\Tests\Unit\SEO\Support;
 
 use PHPUnit\Framework\TestCase;
-use Sidd2604\Larakit\SEO\Support\DateValidator;
+use Therajatspace\Larakit\SEO\Support\DateValidator;
 
 class DateValidatorTest extends TestCase
 {

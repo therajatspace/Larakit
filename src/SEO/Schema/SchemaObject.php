@@ -1,6 +1,6 @@
 <?php
 
-namespace Sidd2604\Larakit\SEO\Schema;
+namespace Therajatspace\Larakit\SEO\Schema;
 
 class SchemaObject
 {

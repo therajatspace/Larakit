@@ -1,12 +1,12 @@
 <?php
 
-namespace Sidd2604\Larakit\Tests\Feature\SEO;
+namespace Therajatspace\Larakit\Tests\Feature\SEO;
 
 use Orchestra\Testbench\TestCase;
-use Sidd2604\Larakit\LaraKitServiceProvider;
-use Sidd2604\Larakit\SEO\Schema\SchemaContext;
-use Sidd2604\Larakit\SEO\Schema\SchemaManager;
-use Sidd2604\Larakit\SEO\Schema\SchemaRelationshipResolver;
+use Therajatspace\Larakit\LaraKitServiceProvider;
+use Therajatspace\Larakit\SEO\Schema\SchemaContext;
+use Therajatspace\Larakit\SEO\Schema\SchemaManager;
+use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
 
 class SchemaServiceProviderTest extends TestCase
 {

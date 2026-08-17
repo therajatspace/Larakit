@@ -1,8 +1,8 @@
 <?php
 
-namespace Sidd2604\Larakit\SEO\Schema;
+namespace Therajatspace\Larakit\SEO\Schema;
 
-use Sidd2604\Larakit\SEO\Support\UrlValidator;
+use Therajatspace\Larakit\SEO\Support\UrlValidator;
 
 class OrganizationSchema extends SchemaObject
 {
