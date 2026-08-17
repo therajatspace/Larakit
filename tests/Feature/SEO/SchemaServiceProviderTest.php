@@ -4,6 +4,7 @@ namespace Therajatspace\Larakit\Tests\Feature\SEO;
 
 use Orchestra\Testbench\TestCase;
 use Therajatspace\Larakit\LaraKitServiceProvider;
+use Therajatspace\Larakit\SEO\SeoManager;
 use Therajatspace\Larakit\SEO\Schema\SchemaContext;
 use Therajatspace\Larakit\SEO\Schema\SchemaManager;
 use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
@@ -50,6 +51,18 @@ class SchemaServiceProviderTest extends TestCase
         $this->assertInstanceOf(
             SchemaRelationshipResolver::class,
             $resolver
+        );
+    }
+
+    public function test_seo_manager_can_be_resolved_from_container(): void
+    {
+        $manager = $this->app->make(
+            SeoManager::class
+        );
+
+        $this->assertInstanceOf(
+            SeoManager::class,
+            $manager
         );
     }
 

@@ -89,6 +89,7 @@ class LaraKitServiceProvider extends ServiceProvider
                     $app->make(OpenGraphManager::class),
                     $app->make(TwitterCardManager::class),
                     $app->make(SchemaManager::class),
+                    $app->make(SchemaConfigurator::class),
                     config('larakit.seo.defaults', [])
                 );
             }
