@@ -12,6 +12,7 @@ use Therajatspace\Larakit\SEO\Schema\SchemaManager;
 use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
 use Therajatspace\Larakit\SEO\SeoManager;
 use Therajatspace\Larakit\SEO\Twitter\TwitterCardManager;
+use Therajatspace\Larakit\Console\Commands\LaraKitInstall;
 
 class LaraKitServiceProvider extends ServiceProvider
 {
@@ -103,6 +104,12 @@ class LaraKitServiceProvider extends ServiceProvider
             in_array('package:discover', $_SERVER['argv'] ?? [])
         ) {
             LaraKitWelcome::show();
+        }
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                LaraKitInstall::class,
+            ]);
         }
 
         Blade::directive('seo', function () {

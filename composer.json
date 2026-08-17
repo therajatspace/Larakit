@@ -17,7 +17,9 @@
   "require": {
     "php": "^8.3",
     "illuminate/support": "^13.25",
-    "illuminate/view": "^13.25"
+    "illuminate/view": "^13.25",
+    "illuminate/console": "^13.25",
+    "laravel/prompts": "^0.3"
   },
   "extra": {
     "laravel": {
