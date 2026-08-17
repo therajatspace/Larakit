@@ -14,13 +14,13 @@ class SchemaManager
     protected SchemaContext $context;
     protected SchemaRelationshipResolver $relationshipResolver;
 
-    /**
-     * @template T of SchemaObject
-     *
-     * @param class-string<T> $class
-     *
-     * @return T
-     */
+    // /**
+    //  * @template T of SchemaObject
+    //  *
+    //  * @param class-string<T> $class
+    //  *
+    //  * @return T
+    //  */
 
     public function __construct(
         SchemaContext $context,
