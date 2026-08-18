@@ -20,6 +20,20 @@ class SeoManager
     protected array $meta = [];
 
     protected ?string $canonical = null;
+    protected ?string $favicon = null;
+
+    protected ?string $faviconType = null;
+
+    protected ?string $appleTouchIcon = null;
+
+    protected ?string $manifest = null;
+
+    protected bool $disableFavicon = false;
+
+    protected bool $disableAppleTouchIcon = false;
+
+    protected bool $disableManifest = false;
+    protected array $head = [];
     protected OpenGraphManager $openGraph;
 
     protected TwitterCardManager $twitter;
@@ -33,20 +47,14 @@ class SeoManager
         SchemaManager $schema,
         SchemaConfigurator $schemaConfigurator,
 
-        array $defaults = []
+        array $defaults = [],
+        array $head = []
     ) {
         $this->openGraph = $openGraph;
         $this->twitter = $twitter;
         $this->schema = $schema;
         $this->schemaConfigurator = $schemaConfigurator;
-
-
-
-        //=================== TO BE DELETED========================//
-
-        // if (config('larakit.seo.schema.auto', true)) {
-        //     $this->loadConfiguredSchemas();
-        // }
+        $this->head = $head;
 
         $this->title = $defaults['title'] ?? null;
 
@@ -93,6 +101,50 @@ class SeoManager
 
         return $this;
     }
+    public function favicon(string $url, ?string $type = null): static
+    {
+        $this->favicon = $url;
+        $this->faviconType = $type;
+        $this->disableFavicon = false;
+
+        return $this;
+    }
+
+    public function appleTouchIcon(string $url): static
+    {
+        $this->appleTouchIcon = $url;
+        $this->disableAppleTouchIcon = false;
+
+        return $this;
+    }
+
+    public function manifest(string $url): static
+    {
+        $this->manifest = $url;
+        $this->disableManifest = false;
+
+        return $this;
+    }
+    public function withoutFavicon(): static
+    {
+        $this->disableFavicon = true;
+
+        return $this;
+    }
+
+    public function withoutAppleTouchIcon(): static
+    {
+        $this->disableAppleTouchIcon = true;
+
+        return $this;
+    }
+
+    public function withoutManifest(): static
+    {
+        $this->disableManifest = true;
+
+        return $this;
+    }
     public function openGraph(): OpenGraphManager
     {
         return $this->openGraph;
@@ -133,29 +185,100 @@ class SeoManager
         return $this->schema->product();
     }
 
+    protected function renderFavicon(): string
+    {
+        if ($this->disableFavicon) {
+            return '';
+        }
 
-    // ================ TO BE DELETED========================//
+        if ($this->favicon !== null) {
+            $html = '<link rel="icon" href="'
+                . htmlspecialchars($this->favicon, ENT_QUOTES, 'UTF-8')
+                . '"';
 
-    // protected function loadConfiguredSchemas(): void
-    // {
-    //     $organization = config(
-    //         'larakit.seo.organization',
-    //         []
-    //     );
+            if ($this->faviconType !== null) {
+                $html .= ' type="'
+                    . htmlspecialchars($this->faviconType, ENT_QUOTES, 'UTF-8')
+                    . '"';
+            }
 
-    //     if (!empty($organization['name'])) {
-    //         $this->schema->organization($organization);
-    //     }
+            return $html . ">\n";
+        }
 
-    //     $website = config(
-    //         'larakit.seo.website',
-    //         []
-    //     );
+        $config = $this->head['favicon'] ?? [];
 
-    //     if (!empty($website['name'])) {
-    //         $this->schema->website($website);
-    //     }
-    // }
+        if (
+            !($config['enabled'] ?? false) ||
+            empty($config['url'])
+        ) {
+            return '';
+        }
+
+        $html = '<link rel="icon" href="'
+            . htmlspecialchars($config['url'], ENT_QUOTES, 'UTF-8')
+            . '"';
+
+        if (!empty($config['type'])) {
+            $html .= ' type="'
+                . htmlspecialchars($config['type'], ENT_QUOTES, 'UTF-8')
+                . '"';
+        }
+
+        return $html . ">\n";
+    }
+
+    protected function renderAppleTouchIcon(): string
+    {
+        if ($this->disableAppleTouchIcon) {
+            return '';
+        }
+
+        $url = $this->appleTouchIcon;
+
+        if ($url === null) {
+            $config = $this->head['apple_touch_icon'] ?? [];
+
+            if (
+                !($config['enabled'] ?? false) ||
+                empty($config['url'])
+            ) {
+                return '';
+            }
+
+            $url = $config['url'];
+        }
+
+        return '<link rel="apple-touch-icon" href="'
+            . htmlspecialchars($url, ENT_QUOTES, 'UTF-8')
+            . "\">\n";
+    }
+
+    protected function renderManifest(): string
+    {
+        if ($this->disableManifest) {
+            return '';
+        }
+
+        $url = $this->manifest;
+
+        if ($url === null) {
+            $config = $this->head['manifest'] ?? [];
+
+            if (
+                !($config['enabled'] ?? false) ||
+                empty($config['url'])
+            ) {
+                return '';
+            }
+
+            $url = $config['url'];
+        }
+
+        return '<link rel="manifest" href="'
+            . htmlspecialchars($url, ENT_QUOTES, 'UTF-8')
+            . "\">\n";
+    }
+
 
     public function render(): string
     {
@@ -180,6 +303,11 @@ class SeoManager
                 . htmlspecialchars($this->canonical, ENT_QUOTES, 'UTF-8')
                 . "\">\n";
         }
+
+        $html .= $this->renderFavicon();
+        $html .= $this->renderAppleTouchIcon();
+        $html .= $this->renderManifest();
+
         $this->openGraph->inherit(
             $this->title,
             $this->meta['description'] ?? null,

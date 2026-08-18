@@ -12,6 +12,26 @@ return [
             'robots' => null,
         ],
 
+        'head' => [
+
+            'favicon' => [
+                'enabled' => false,
+                'url' => null,
+                'type' => null,
+            ],
+
+            'apple_touch_icon' => [
+                'enabled' => false,
+                'url' => null,
+            ],
+
+            'manifest' => [
+                'enabled' => false,
+                'url' => null,
+            ],
+
+        ],
+
         'schema' => [
             'auto' => true,
         ],
