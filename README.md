@@ -16,44 +16,35 @@ unnecessary abstraction.
 
 ## Table of Contents
 
-1.  [What is LaraKit?](#what-is-larikit)
+1.  [What is LaraKit?](#what-is-larakit)
 2.  [Current Status](#current-status)
 3.  [Requirements](#requirements)
 4.  [Installation](#installation)
-5.  [LaraKit Installer](#larakit-installer)
-6.  [Basic SEO](#basic-seo)
-7.  [SEO Manager](#seo-manager)
-8.  [Facade](#facade)
-9.  [Blade Directive](#blade-directive)
-10. [Open Graph](#open-graph)
-11. [Twitter Cards](#twitter-cards)
-12. [JSON-LD and Schema.org](#json-ld-and-schemaorg)
-13. [Schema Objects](#schema-objects)
-14. [SchemaObject Base API](#schemaobject-base-api)
-15. [Article Schema](#article-schema)
-16. [Product Schema](#product-schema)
-17. [Organization Schema](#organization-schema)
-18. [WebSite Schema](#website-schema)
-19. [Breadcrumb Schema](#breadcrumb-schema)
-20. [Creating Schemas from Arrays](#creating-schemas-from-arrays)
-21. [Schema IDs](#schema-ids)
-22. [Schema References](#schema-references)
-23. [Schema Graph](#schema-graph)
-24. [Schema Relationships](#schema-relationships)
-25. [Schema Relationship Resolution](#schema-relationship-resolution)
-26. [Schema Context](#schema-context)
-27. [Rendering JSON-LD](#rendering-json-ld)
-28. [Laravel Service Container
-    Integration](#laravel-service-container-integration)
-29. [Configuration](#configuration)
-30. [Testing](#testing)
-31. [Architecture](#architecture)
-32. [Design Philosophy](#design-philosophy)
-33. [Current Modules](#current-modules)
-34. [Roadmap](#roadmap)
-35. [Contributing](#contributing)
-36. [Author and The Rajat Space](#author-and-the-rajat-space)
-37. [License](#license)
+5.  [The Three Ways to Reach the SEO Manager](#the-three-ways-to-reach-the-seo-manager)
+6.  [Rendering Everything: the `@seo` Directive](#rendering-everything-the-seo-directive)
+7.  [LaraKit Installer](#larakit-installer)
+8.  [Basic SEO](#basic-seo)
+9.  [Open Graph](#open-graph)
+10. [Twitter Cards](#twitter-cards)
+11. [Schema Objects (JSON-LD)](#schema-objects-json-ld)
+12. [Article Schema](#article-schema)
+13. [Product Schema](#product-schema)
+14. [Organization Schema](#organization-schema)
+15. [WebSite Schema](#website-schema)
+16. [Breadcrumb Schema](#breadcrumb-schema)
+17. [The Generic Escape Hatch](#the-generic-escape-hatch)
+18. [Schema Relationships](#schema-relationships)
+19. [Configuration Reference](#configuration-reference)
+20. [Full End-to-End Example](#full-end-to-end-example)
+21. [Known Limitations](#known-limitations)
+22. [Testing](#testing)
+23. [Architecture](#architecture)
+24. [Design Philosophy](#design-philosophy)
+25. [Current Modules](#current-modules)
+26. [Roadmap](#roadmap)
+27. [Contributing](#contributing)
+28. [Author and The Rajat Space](#author-and-the-rajat-space)
+29. [License](#license)
 
 ---
 
@@ -77,9 +68,8 @@ The current SEO layer covers:
 - Schema.org objects
 - schema IDs
 - schema references
-- schema relationships
+- schema relationships (automatic and manual)
 - schema graphs
-- automatic relationship resolution
 - Laravel service-container integration
 - a Laravel Artisan installer
 
@@ -102,19 +92,18 @@ therajatspace/larakit
 
 The `v1.5.0` development line adds the LaraKit module installer.
 
-The installer currently understands these modules:
+As of this version, **only the SEO module is actually implemented**. The
+installer references three other modules — Authentication, Admin Panel,
+and Image Optimization — but selecting any of them currently prints a
+message that the module is not available yet rather than pretending it
+was installed.
 
 ```text
-SEO
-Authentication
-Admin Panel
-Image Optimization
+SEO                  → Implemented
+Authentication        → Planned
+Admin Panel           → Planned
+Image Optimization    → Planned
 ```
-
-SEO is implemented.
-
-Authentication, Admin Panel, and Image Optimization are planned modules
-and are currently reported as unavailable by the installer.
 
 ---
 
@@ -147,28 +136,94 @@ Install LaraKit through Composer:
 composer require therajatspace/larakit
 ```
 
-Because LaraKit registers its Laravel service provider through
-Composer's Laravel package discovery, no manual provider registration is
-normally required.
+Laravel's package auto-discovery registers `LaraKitServiceProvider`
+automatically — there is no manual provider registration step.
 
-After installation, LaraKit can be accessed through Laravel's service
-container, its facade, Blade integration, and the Artisan installer.
+On boot, the provider binds the following classes into the container as
+**singletons** (one instance per request):
+
+- `SchemaContext`, `SchemaRelationshipResolver`, `SchemaManager`
+- `OpenGraphManager`, `TwitterCardManager`, `SchemaConfigurator`
+- `SeoManager` (the main object you interact with)
+
+**Why singletons matter:** because each of these lives for the whole
+request, you can configure SEO data in a controller and it will still be
+present when the Blade view renders — there is no need to pass data
+through the view manually.
+
+## Publishing the config file (optional)
+
+```bash
+php artisan vendor:publish --tag=larakit-config
+```
+
+This produces `config/larakit.php`, which controls default
+title/description/robots values and (optionally) a site-wide
+Organization and WebSite schema. See [Configuration
+Reference](#configuration-reference) for the full breakdown.
+
+---
+
+# The Three Ways to Reach the SEO Manager
+
+All three resolve the exact same singleton instance for the current
+request — pick whichever fits your code style.
+
+```php
+// 1. Container resolution
+$seo = app(\Therajatspace\Larakit\SEO\SeoManager::class);
+
+// 2. Facade (used throughout this README)
+use Therajatspace\Larakit\Facades\Seo;
+Seo::title('My Page');
+
+// 3. Constructor / method injection
+public function show(\Therajatspace\Larakit\SEO\SeoManager $seo)
+{
+    // ...
+}
+```
+
+---
+
+# Rendering Everything: the `@seo` Directive
+
+LaraKit provides an `@seo` Blade directive that renders everything you've
+configured — basic meta tags, Open Graph, Twitter Cards, and the JSON-LD
+schema graph — in one place.
+
+```blade
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    @seo
+
+</head>
+<body>
+
+    @yield('content')
+
+</body>
+</html>
+```
+
+The directive compiles to `echo app(SeoManager::class)->render();`. It
+must run after your controller has configured the `Seo` facade, which is
+naturally the case since controllers execute before views render.
 
 ---
 
 # LaraKit Installer
 
-Starting with the installer work introduced after the initial SEO
-release, LaraKit provides:
+LaraKit provides:
 
 ```bash
 php artisan larakit:install
 ```
 
-The installer uses Laravel Prompts for interactive module selection.
-
-The interactive selector allows multiple modules to be selected with the
-keyboard:
+Running it without flags opens an interactive multiselect prompt (built
+with Laravel Prompts) that defaults to SEO:
 
 ```text
 LaraKit Installation
@@ -187,60 +242,33 @@ Typical controls are:
 - Space --- select or deselect a module
 - Enter --- confirm
 
-SEO is selected by default.
+## Installing specific modules with flags
 
-## Installing a specific module
-
-You can skip the interactive menu by using flags.
-
-### SEO
+You can skip the interactive menu by using flags directly:
 
 ```bash
 php artisan larakit:install --seo
-```
-
-### Authentication
-
-```bash
 php artisan larakit:install --auth
-```
-
-At the current stage this reports that Authentication is not available
-yet.
-
-### Admin Panel
-
-```bash
 php artisan larakit:install --admin
-```
-
-### Image Optimization
-
-```bash
 php artisan larakit:install --image
+php artisan larakit:install --seo --auth   # flags can be combined
+php artisan larakit:install --all          # runs every check
 ```
 
-### Multiple modules
+| Flag      | Behavior                                                     |
+| --------- | ------------------------------------------------------------ |
+| `--seo`   | Prints a confirmation; SEO needs no setup, works immediately |
+| `--auth`  | Prints "Authentication module is not available yet."         |
+| `--admin` | Prints "Admin Panel module is not available yet."            |
+| `--image` | Prints "Image Optimization module is not available yet."     |
+| `--all`   | Runs all four checks above                                   |
 
-Flags can be combined:
-
-```bash
-php artisan larakit:install --seo --auth
-```
-
-### All modules
-
-```bash
-php artisan larakit:install --all
-```
-
-The `--all` option currently selects all known LaraKit modules. Modules
-that are not yet implemented are reported as unavailable rather than
-pretending that they were installed.
+No files are published and no stubs are copied — the installer is purely
+informational for the SEO module today, because SEO functionality is
+already available after Composer installation and Laravel package
+discovery.
 
 ## Installer philosophy
-
-The installer is deliberately designed around a simple flow:
 
 ```text
 Select modules
@@ -256,722 +284,542 @@ The command is responsible for selection and coordination. Individual
 modules can have their own small installer classes when actual
 installation work is required.
 
-The SEO installer currently does not need to publish migrations or files
-because the SEO functionality is already available after Composer
-installation and Laravel package discovery.
-
 ---
 
 # Basic SEO
 
-The SEO layer is centered around `SeoManager`.
+This is the foundation layer inside `SeoManager` itself — the plain
+`<title>`, `<meta>`, and canonical tags that Open Graph and Twitter Cards
+can inherit from.
 
-The manager provides a fluent interface for building the SEO information
-that should eventually be rendered into the page `<head>`.
+## Method reference
 
-A typical flow is:
+| Method                             | Produces                    |
+| ---------------------------------- | --------------------------- |
+| `title(string $title)`             | `<title>` tag               |
+| `description(string $description)` | `<meta name="description">` |
+| `keywords(string $keywords)`       | `<meta name="keywords">`    |
+| `robots(string $robots)`           | `<meta name="robots">`      |
+| `canonical(string $url)`           | `<link rel="canonical">`    |
 
-```php
-$seo = app(\Therajatspace\Larakit\SEO\SeoManager::class);
+All methods are fluent (return `static`) and unvalidated — any string is
+accepted. Values are automatically escaped with `htmlspecialchars(...,
+ENT_QUOTES, 'UTF-8')` before printing, so passing raw user input is safe
+from XSS.
 
-$seo
-    ->title('My Laravel Website')
-    ->description('A description of my website.')
-    ->canonical('https://example.com')
-    ->render();
-```
+Every block in `render()` is wrapped in an `if` check — unset fields are
+skipped entirely, so you never get an empty `<meta name="description"
+content="">`.
 
-The exact combination of properties can be changed for every page.
-
-The general philosophy is:
-
-```text
-Configure SEO
-      ↓
-Build metadata
-      ↓
-Build social metadata
-      ↓
-Build structured data
-      ↓
-Render once
-```
-
----
-
-# SEO Manager
-
-The main class is:
-
-```php
-Therajatspace\Larakit\SEO\SeoManager
-```
-
-It coordinates the major SEO systems.
-
-Conceptually:
-
-```text
-SeoManager
-    ├── Basic SEO metadata
-    ├── OpenGraphManager
-    ├── TwitterCardManager
-    └── SchemaManager
-```
-
-This means an application can configure several SEO layers through one
-manager and then render the result.
-
-For example:
-
-```php
-$seo = app(\Therajatspace\Larakit\SEO\SeoManager::class);
-
-$seo
-    ->title('LaraKit')
-    ->description('A Laravel toolkit.')
-    ->render();
-```
-
-The rendered output can contain:
-
-```html
-<title>LaraKit</title> <meta name="description" content="A Laravel toolkit." />
-```
-
-along with the configured social metadata and JSON-LD output.
-
----
-
-# Facade
-
-LaraKit provides an SEO facade:
-
-```php
-Therajatspace\Larakit\Facades\Seo
-```
-
-This allows SEO configuration without manually resolving `SeoManager`
-from the service container.
-
-For example:
+## Example — full basic SEO setup
 
 ```php
 use Therajatspace\Larakit\Facades\Seo;
 
-Seo::title('LaraKit');
+Seo::title('Understanding Laravel Service Providers')
+    ->description('A practical guide to how Laravel service providers work.')
+    ->keywords('laravel, service provider, php')
+    ->robots('index, follow')
+    ->canonical('https://example.com/blog/laravel-service-providers');
 ```
 
-The facade resolves the registered `SeoManager` instance from Laravel's
-container.
+Output (from `@seo`):
 
-This is useful when you prefer Laravel's familiar facade syntax.
+```html
+<title>Understanding Laravel Service Providers</title>
+<meta
+  name="description"
+  content="A practical guide to how Laravel service providers work."
+/>
+<meta name="keywords" content="laravel, service provider, php" />
+<meta name="robots" content="index, follow" />
+<link
+  rel="canonical"
+  href="https://example.com/blog/laravel-service-providers"
+/>
+```
 
-If you prefer explicit dependency resolution, use:
+## Example — minimal (only title)
 
 ```php
-app(\Therajatspace\Larakit\SEO\SeoManager::class)
+Seo::title('Home');
 ```
 
----
-
-# Blade Directive
-
-LaraKit also provides an `@seo` Blade directive.
-
-Inside a Blade layout, you can use:
-
-```blade
-<head>
-
-    @seo
-
-</head>
+```html
+<title>Home</title>
 ```
 
-The directive resolves the package's `SeoManager` from the Laravel
-service container and renders the configured SEO output.
+## Example — config-driven defaults
 
-A common layout structure can therefore be:
+`SeoManager`'s constructor reads fallback values from
+`config('larakit.seo.defaults')`:
 
-```blade
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-    @seo
-
-</head>
-
-<body>
-
-    @yield('content')
-
-</body>
-
-</html>
+```php
+// config/larakit.php
+'defaults' => [
+    'title'   => 'My Site — Default Title',
+    'robots'  => 'index, follow',
+],
 ```
 
-Then individual controllers, services, view composers, or other
-application code can configure the SEO manager before the view is
-rendered.
+Any page that never calls `Seo::title()` will still render the default
+title and robots tag. Calling `Seo::title()` on a specific page simply
+overrides it.
+
+> **Gotcha:** only `title`, `description`, and `robots` are read from
+> config defaults in the constructor. `keywords` and `canonical` have
+> **no** config default support — they must be set per page.
 
 ---
 
 # Open Graph
 
-LaraKit contains an Open Graph manager:
+Open Graph controls how a link looks when shared on Facebook, LinkedIn,
+Slack, Discord, and WhatsApp. Handled by `OpenGraphManager`, accessed via
+`Seo::openGraph()`.
+
+## Method reference
+
+| Method                                                    | Produces / Notes                                               |
+| --------------------------------------------------------- | -------------------------------------------------------------- |
+| `title(string $title)`                                    | `og:title`                                                     |
+| `description(string $description)`                        | `og:description`                                               |
+| `type(string $type)`                                      | `og:type` — validated against a whitelist (below)              |
+| `url(string $url)`                                        | `og:url`                                                       |
+| `image($url, $alt = null, $width = null, $height = null)` | adds an image; callable multiple times                         |
+| `getFirstImage()`                                         | returns the first image array, or `null` (feeds Twitter Cards) |
+
+Valid `type()` values: `website`, `article`, `book`, `profile`,
+`music.song`, `music.album`, `music.playlist`, `music.radio_station`,
+`video.movie`, `video.episode`, `video.tv_show`, `video.other`. Anything
+else throws `InvalidArgumentException`.
+
+## Example — fully manual Open Graph
 
 ```php
-Therajatspace\Larakit\SEO\OpenGraph\OpenGraphManager
+Seo::openGraph()
+    ->title('Understanding Laravel Service Providers')
+    ->description('A deep dive into how Laravel wires services together.')
+    ->type('article')
+    ->url('https://example.com/blog/laravel-service-providers')
+    ->image('https://example.com/images/laravel-og.jpg',
+        alt: 'Laravel logo on a gradient background', width: 1200, height: 630);
 ```
 
-Open Graph metadata is used by platforms such as social networks and
-messaging applications to understand how a URL should be represented
-when shared.
+```html
+<meta property="og:title" content="Understanding Laravel Service Providers" />
+<meta
+  property="og:description"
+  content="A deep dive into how Laravel wires services together."
+/>
+<meta property="og:type" content="article" />
+<meta
+  property="og:url"
+  content="https://example.com/blog/laravel-service-providers"
+/>
+<meta property="og:image" content="https://example.com/images/laravel-og.jpg" />
+<meta property="og:image:alt" content="Laravel logo on a gradient background" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+```
 
-Typical Open Graph information includes:
+## The inheritance shortcut
 
-- title
-- description
-- URL
-- image
-- content type
-- site information
+`SeoManager::render()` calls `$openGraph->inherit($title, $description,
+$canonical)` before rendering, which fills a field **only if it is still
+null**. This means basic SEO fields cascade into Open Graph
+automatically.
 
-The Open Graph system is kept separate from the main SEO manager so that
-social metadata has its own focused responsibility.
+### Example — zero Open Graph calls needed
 
-The normal usage pattern is to configure Open Graph information through
-the main SEO manager and render it together with the other SEO output.
+```php
+Seo::title('Understanding Laravel Service Providers')
+   ->description('A deep dive into how Laravel wires services together.')
+   ->canonical('https://example.com/blog/laravel-service-providers');
+// No openGraph() calls at all
+```
+
+```html
+<title>Understanding Laravel Service Providers</title>
+<meta
+  name="description"
+  content="A deep dive into how Laravel wires services together."
+/>
+<link
+  rel="canonical"
+  href="https://example.com/blog/laravel-service-providers"
+/>
+<meta property="og:title" content="Understanding Laravel Service Providers" />
+<meta
+  property="og:description"
+  content="A deep dive into how Laravel wires services together."
+/>
+<meta
+  property="og:url"
+  content="https://example.com/blog/laravel-service-providers"
+/>
+```
+
+Three basic-SEO calls produced six tags. Note there is no `og:type` or
+`og:image` — those have no basic-SEO equivalent, so they must always be
+set explicitly.
+
+### Example — explicit value overrides inheritance
+
+```php
+Seo::title('Understanding Laravel Service Providers')
+   ->description('A deep dive into service providers.');
+
+Seo::openGraph()->title('The Laravel Service Provider Guide Everyone Needs');
+```
+
+Because `og:title` was already set explicitly (non-null) before
+`inherit()` ran, the inherit call skipped it. Description was left
+untouched, so it inherited normally.
+
+### Example — multiple images & validation
+
+```php
+Seo::openGraph()
+    ->image('https://example.com/images/hero.jpg', width: 1200, height: 630)
+    ->image('https://example.com/images/hero-square.jpg', width: 800, height: 800);
+
+Seo::openGraph()->type('slideshow');
+// throws InvalidArgumentException: "Invalid Open Graph type: slideshow"
+
+Seo::openGraph()->image('not-a-url');
+// throws InvalidArgumentException: "Invalid Open Graph image URL: not-a-url"
+```
+
+> **Gotcha:** `getFirstImage()` is not just a convenience getter —
+> `SeoManager::render()` uses it to supply Twitter Cards' fallback image.
+> The **order** in which you add OG images matters, since only the first
+> becomes the Twitter fallback.
 
 ---
 
 # Twitter Cards
 
-LaraKit contains a Twitter Card manager:
+Controls link previews on X/Twitter. Handled by `TwitterCardManager`,
+accessed via `Seo::twitter()`. Structurally the sibling of
+`OpenGraphManager`, with the same inheritance pattern.
+
+## Method reference
+
+| Method                             | Produces / Notes                                                              |
+| ---------------------------------- | ----------------------------------------------------------------------------- |
+| `card(string $card)`               | `twitter:card` — whitelist: `summary`, `summary_large_image`, `app`, `player` |
+| `title(string $title)`             | `twitter:title`                                                               |
+| `description(string $description)` | `twitter:description`                                                         |
+| `image($url, $alt = null)`         | `twitter:image` (+ `:alt`) — only **one** image, unlike Open Graph            |
+| `site(string $site)`               | `twitter:site` (publication's @handle)                                        |
+| `creator(string $creator)`         | `twitter:creator` (author's @handle)                                          |
+
+## Example — fully manual Twitter Card
 
 ```php
-Therajatspace\Larakit\SEO\Twitter\TwitterCardManager
+Seo::twitter()
+    ->card('summary_large_image')
+    ->title('Understanding Laravel Service Providers')
+    ->description('A deep dive into how Laravel wires services together.')
+    ->image('https://example.com/images/twitter-card.jpg', alt: 'Laravel logo')
+    ->site('@laravelphp')
+    ->creator('@siddharth_dev');
 ```
 
-Twitter/X cards provide metadata that controls how shared URLs can be
-represented on supported social platforms.
+```html
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Understanding Laravel Service Providers" />
+<meta
+  name="twitter:description"
+  content="A deep dive into how Laravel wires services together."
+/>
+<meta
+  name="twitter:image"
+  content="https://example.com/images/twitter-card.jpg"
+/>
+<meta name="twitter:image:alt" content="Laravel logo" />
+<meta name="twitter:site" content="@laravelphp" />
+<meta name="twitter:creator" content="@siddharth_dev" />
+```
 
-The Twitter system is separated from Open Graph because the two systems
-have different metadata conventions.
+## The double inheritance chain
 
-The manager is registered with Laravel's service container and
-coordinated by `SeoManager`.
+`SeoManager::render()` wires Twitter from **two** sources:
+
+```php
+$this->twitter->inherit($this->title, $this->meta['description'] ?? null);
+$this->twitter->inheritImage($this->openGraph->getFirstImage());
+```
+
+Title and description fall back to basic SEO; the image falls back to
+**Open Graph's first image** (basic SEO has no image concept).
+
+### Example — Twitter inherits from title/description/OG image
+
+```php
+Seo::title('Understanding Laravel Service Providers')
+   ->description('A deep dive into service providers.');
+
+Seo::openGraph()
+   ->image('https://example.com/images/hero.jpg', alt: 'Hero image', width: 1200, height: 630)
+   ->image('https://example.com/images/hero-square.jpg'); // 2nd image ignored by Twitter
+```
+
+```html
+<meta name="twitter:title" content="Understanding Laravel Service Providers" />
+<meta
+  name="twitter:description"
+  content="A deep dive into service providers."
+/>
+<meta name="twitter:image" content="https://example.com/images/hero.jpg" />
+<meta name="twitter:image:alt" content="Hero image" />
+```
+
+Only the first OG image is used; width/height are silently dropped since
+Twitter Cards has no equivalent tag. No `twitter:card` is ever
+inherited — it must always be set explicitly.
+
+### Example — full realistic social setup
+
+```php
+Seo::title('Understanding Laravel Service Providers')
+   ->description('A deep dive into how Laravel wires services together.')
+   ->canonical('https://example.com/blog/laravel-service-providers');
+
+Seo::openGraph()
+   ->type('article')
+   ->image('https://example.com/images/laravel-og.jpg', width: 1200, height: 630);
+
+Seo::twitter()
+   ->card('summary_large_image')
+   ->site('@laravelphp')
+   ->creator('@siddharth_dev');
+```
+
+> **Gotcha:** there is no `type()` / `url()` equivalent for Twitter —
+> those concepts don't exist in the spec. Forgetting `->card(...)` is the
+> most common way to end up with a broken-looking Twitter preview: every
+> other tag present, but ignored by the platform without a valid card
+> type.
 
 ---
 
-# JSON-LD and Schema.org
+# Schema Objects (JSON-LD)
 
-One of the major parts of LaraKit is JSON-LD structured data.
+Builds the `<script type="application/ld+json">` block so search engines
+understand your page as structured entities. Handled by `SchemaManager`
+plus a family of `SchemaObject` subclasses under `src/SEO/Schema/`.
 
-JSON-LD allows a web page to describe its entities and their
-relationships in a machine-readable format.
+## The base class: `SchemaObject`
 
-LaraKit represents JSON-LD data using PHP objects rather than forcing
-developers to manually construct large associative arrays.
+Every schema starts with `['@context' => 'https://schema.org']` and
+inherits these methods:
 
-The basic concept is:
+| Method                                | Purpose                                                          |
+| ------------------------------------- | ---------------------------------------------------------------- |
+| `type(string $type)`                  | sets `@type` (subclasses set this in their constructor already)  |
+| `name()` / `description()` / `url()`  | common fields                                                    |
+| `property(string $key, mixed $value)` | escape hatch — sets any arbitrary field                          |
+| `id(string $id)` / `hasId(): bool`    | sets / checks `@id`                                              |
+| `reference($id)` / `ref($id)`         | returns `['@id' => $id]` as array, or a `SchemaReference` object |
+| `toArray(): array`                    | raw data array                                                   |
+| `fromArray(array $data)`              | bulk-assign — see gotcha below                                   |
 
-```text
-PHP Schema Object
-       ↓
-toArray()
-       ↓
-JSON-LD data
-       ↓
-SchemaManager
-       ↓
-JSON-LD <script>
-```
+> **Gotcha:** the base class's `fromArray()` merges keys directly with
+> **no validation**. Every subclass (`ArticleSchema`, `ProductSchema`,
+> etc.) overrides `fromArray()` to route fields through validated fluent
+> setters instead — so validation only applies when using the typed
+> subclasses, not the raw generic object.
 
-A schema object is a normal PHP object with fluent methods.
-
-For example:
-
-```php
-$organization = new OrganizationSchema();
-
-$organization
-    ->name('LaraKit')
-    ->url('https://example.com')
-    ->logo('https://example.com/logo.png');
-```
-
-The resulting array can be inspected with:
+## Reaching the schema layer
 
 ```php
-$data = $organization->toArray();
+Seo::schema();         // generic SchemaObject — build entirely by hand
+Seo::article();        // -> ArticleSchema
+Seo::breadcrumbs();    // -> BreadcrumbSchema
+Seo::organization();   // -> OrganizationSchema
+Seo::website();        // -> WebSiteSchema
+Seo::product();        // -> ProductSchema
 ```
 
-and will contain Schema.org-compatible JSON-LD data.
+Every specialized method (all except `schema()`) automatically:
+instantiates the class, pushes it into the page's shared `SchemaGraph`,
+assigns an `@id`, and populates it from the array you pass in.
 
----
+## Page-scoped vs. site-scoped IDs
 
-# Schema Objects
+| Schema                                    | ID basis                                                 |
+| ----------------------------------------- | -------------------------------------------------------- |
+| `article()`, `breadcrumbs()`, `product()` | **Current page URL** (page-scoped)                       |
+| `organization()`, `website()`             | **Site base URL** from `config('app.url')` (site-scoped) |
 
-The current schema objects include:
-
-```text
-SchemaObject
-├── ArticleSchema
-├── BreadcrumbSchema
-├── OrganizationSchema
-├── ProductSchema
-└── WebSiteSchema
-```
-
-The base class provides common functionality while specialized classes
-provide schema-specific methods.
-
-This gives LaraKit two important advantages:
-
-1.  Common properties do not need to be reimplemented in every schema.
-2.  Specialized schemas can expose methods appropriate to their
-    Schema.org type.
-
----
-
-# SchemaObject Base API
-
-The base class is:
-
-```php
-Therajatspace\Larakit\SEO\Schema\SchemaObject
-```
-
-It starts with:
-
-```json
-{
-  "@context": "https://schema.org"
-}
-```
-
-## `type()`
-
-Sets the Schema.org type:
-
-```php
-$schema->type('Thing');
-```
-
-## `name()`
-
-Sets the name:
-
-```php
-$schema->name('LaraKit');
-```
-
-## `description()`
-
-Sets the description:
-
-```php
-$schema->description('Laravel SEO toolkit');
-```
-
-## `url()`
-
-Sets the canonical URL of the entity:
-
-```php
-$schema->url('https://example.com');
-```
-
-## `property()`
-
-Allows an arbitrary property to be added:
-
-```php
-$schema->property(
-    'customProperty',
-    'custom value'
-);
-```
-
-This is important because Schema.org is much larger than the small set
-of convenience methods currently provided by LaraKit.
-
-Instead of requiring a dedicated PHP method for every possible
-Schema.org property, developers can use `property()` for additional
-data.
-
-## `id()`
-
-Sets the JSON-LD `@id`:
-
-```php
-$schema->id('https://example.com/#organization');
-```
-
-## `hasId()`
-
-Checks whether the object already contains an `@id`:
-
-```php
-if ($schema->hasId()) {
-    // The schema has an @id.
-}
-```
-
-## `reference()`
-
-Creates a simple JSON-LD reference:
-
-```php
-$reference = $schema->reference(
-    'https://example.com/#organization'
-);
-```
-
-The result is:
-
-```php
-[
-    '@id' => 'https://example.com/#organization',
-]
-```
-
-## `ref()`
-
-Creates a `SchemaReference` object:
-
-```php
-$reference = $schema->ref(
-    'https://example.com/#organization'
-);
-```
-
-This is useful when relationships between schemas are being constructed.
-
-## `fromArray()`
-
-Schema data can also be populated from an array:
-
-```php
-$schema->fromArray([
-    'name' => 'LaraKit',
-    'description' => 'Laravel SEO toolkit',
-    'url' => 'https://example.com',
-]);
-```
-
-## `toArray()`
-
-Returns the final schema representation:
-
-```php
-$data = $schema->toArray();
-```
-
-The result is a normal PHP array and can therefore be inspected, tested,
-transformed, or encoded as JSON.
+IDs take the form `{url}/#{fragment}`, e.g.
+`https://example.com/#organization`.
 
 ---
 
 # Article Schema
 
-The article schema class is:
-
 ```php
 Therajatspace\Larakit\SEO\Schema\ArticleSchema
 ```
 
-It automatically uses:
+Automatically uses `"@type": "Article"`.
+
+```php
+Seo::article([
+    'name'          => 'Understanding Laravel Service Providers',
+    'headline'      => 'Understanding Laravel Service Providers',
+    'description'   => 'A deep dive into how Laravel wires services together.',
+    'author'        => 'Siddharth Sharma',
+    'datePublished' => '2026-08-17',
+    'image'         => 'https://example.com/images/laravel-og.jpg',
+]);
+```
+
+Output (current URL: `/blog/laravel-service-providers`):
 
 ```json
-"@type": "Article"
-```
-
-Example:
-
-```php
-use Therajatspace\Larakit\SEO\Schema\ArticleSchema;
-
-$article = new ArticleSchema();
-
-$article
-    ->name('Understanding Laravel')
-    ->headline('Understanding Laravel')
-    ->description('A guide to Laravel.')
-    ->url('https://example.com/articles/laravel')
-    ->author('Siddharth Sharma')
-    ->datePublished('2026-08-17')
-    ->dateModified('2026-08-17')
-    ->image('https://example.com/images/laravel.jpg');
-```
-
-## Article-specific methods
-
-### `headline()`
-
-```php
-$article->headline('Understanding Laravel');
-```
-
-### `author()`
-
-```php
-$article->author('Siddharth Sharma');
-```
-
-The author is represented as a Person:
-
-```json
-"author": {
-    "@type": "Person",
-    "name": "Siddharth Sharma"
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "@id": "https://example.com/blog/laravel-service-providers/#article",
+  "name": "Understanding Laravel Service Providers",
+  "description": "A deep dive into how Laravel wires services together.",
+  "headline": "Understanding Laravel Service Providers",
+  "author": { "@type": "Person", "name": "Siddharth Sharma" },
+  "datePublished": "2026-08-17",
+  "image": "https://example.com/images/laravel-og.jpg"
 }
 ```
 
-### `datePublished()`
+`author()` always wraps the name in a `Person` object — there is
+currently no way to pass an Organization as author. `datePublished` /
+`dateModified` accept only: `Y`, `Y-m`, `Y-m-d`, or full ISO 8601.
+Anything else throws.
+
+Manual linking is also available:
 
 ```php
-$article->datePublished('2026-08-17');
+$article->publisher('https://example.com/#organization');
+$article->isPartOf('https://example.com/#website');
 ```
 
-The date is validated before being stored.
-
-### `dateModified()`
-
-```php
-$article->dateModified('2026-08-17');
-```
-
-The date is validated before being stored.
-
-### `image()`
-
-```php
-$article->image(
-    'https://example.com/images/article.jpg'
-);
-```
-
-The URL is validated before being stored.
-
-## Publisher relationship
-
-An article can reference a publisher by schema ID:
-
-```php
-$article->publisher(
-    'https://example.com/#organization'
-);
-```
-
-This produces:
-
-```json
-"publisher": {
-    "@id": "https://example.com/#organization"
-}
-```
-
-## Website relationship
-
-An article can also reference the website it belongs to:
-
-```php
-$article->isPartOf(
-    'https://example.com/#website'
-);
-```
+(See [Schema Relationships](#schema-relationships) for automatic
+linking.)
 
 ---
 
 # Product Schema
 
-The product schema class is:
-
 ```php
 Therajatspace\Larakit\SEO\Schema\ProductSchema
 ```
 
-It automatically uses:
-
-```json
-"@type": "Product"
-```
-
-Example:
+Automatically uses `"@type": "Product"`.
 
 ```php
-use Therajatspace\Larakit\SEO\Schema\ProductSchema;
-
-$product = new ProductSchema();
-
-$product
-    ->name('LaraKit Pro')
-    ->description('A Laravel toolkit.')
-    ->url('https://example.com/products/larakit-pro')
-    ->image('https://example.com/images/larakit-pro.png')
-    ->brand('The Rajat Space')
-    ->sku('LRK-PRO-001');
-```
-
-## Product-specific methods
-
-### `image()`
-
-```php
-$product->image(
-    'https://example.com/images/product.jpg'
-);
-```
-
-The URL is validated.
-
-### `brand()`
-
-```php
-$product->brand('The Rajat Space');
-```
-
-The output represents the brand as:
-
-```json
-"brand": {
-    "@type": "Brand",
-    "name": "The Rajat Space"
-}
-```
-
-### `sku()`
-
-```php
-$product->sku('PRODUCT-001');
-```
-
-### `offers()`
-
-Offers can be supplied as an array:
-
-```php
-$product->offers([
-    'price' => '49.99',
-    'priceCurrency' => 'USD',
-    'availability' => 'https://schema.org/InStock',
+Seo::product([
+    'name' => 'LaraKit Pro',
+    'description' => 'A Laravel toolkit.',
+    'image' => 'https://example.com/images/larakit-pro.png',
+    'brand' => 'The Rajat Space',
+    'sku' => 'LRK-PRO-001',
+    'offers' => [
+        'price' => '49.99',
+        'priceCurrency' => 'USD',
+        'availability' => 'https://schema.org/InStock',
+    ],
 ]);
 ```
 
-The package adds:
-
 ```json
-"@type": "Offer"
+{
+  "@type": "Product",
+  "@id": "https://example.com/products/larakit-pro/#product",
+  "name": "LaraKit Pro",
+  "description": "A Laravel toolkit.",
+  "image": "https://example.com/images/larakit-pro.png",
+  "brand": { "@type": "Brand", "name": "The Rajat Space" },
+  "sku": "LRK-PRO-001",
+  "offers": {
+    "@type": "Offer",
+    "price": "49.99",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock"
+  }
+}
 ```
 
-to the offer structure.
+`image()` and `brand()` validate/normalize their input; `brand` is
+represented as a `Brand` object and `offers` is wrapped as an `Offer`
+object automatically.
+
+> **Gotcha:** a Product's `@id` is built from the **current request
+> URL**, not the `url` value you pass in the data array. These will
+> diverge if you build the schema outside of the page it represents
+> (e.g. in a queued job).
 
 ---
 
 # Organization Schema
 
-The organization schema class is:
-
 ```php
 Therajatspace\Larakit\SEO\Schema\OrganizationSchema
 ```
 
-It automatically uses:
-
-```json
-"@type": "Organization"
-```
-
-Example:
+Automatically uses `"@type": "Organization"`.
 
 ```php
-use Therajatspace\Larakit\SEO\Schema\OrganizationSchema;
-
-$organization = new OrganizationSchema();
-
-$organization
-    ->name('The Rajat Space')
-    ->url('https://therajatspace.in')
-    ->logo('https://therajatspace.in/logo.png')
-    ->sameAs([
-        'https://github.com/therajatspace',
-    ]);
-```
-
-## `logo()`
-
-```php
-$organization->logo(
-    'https://example.com/logo.png'
-);
-```
-
-The URL is validated.
-
-## `sameAs()`
-
-```php
-$organization->sameAs([
-    'https://github.com/therajatspace',
-    'https://linkedin.com/company/example',
+Seo::organization([
+    'name'    => 'The Rajat Space',
+    'url'     => 'https://therajatspace.in',
+    'logo'    => 'https://therajatspace.in/logo.png',
+    'same_as' => ['https://github.com/therajatspace'],
 ]);
 ```
 
-Every supplied URL is validated.
-
-The resulting JSON-LD contains:
+Output (with `app.url = https://example.com`):
 
 ```json
-"sameAs": [
-    "https://github.com/therajatspace"
-]
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://example.com/#organization",
+  "name": "The Rajat Space",
+  "url": "https://therajatspace.in",
+  "logo": "https://therajatspace.in/logo.png",
+  "sameAs": ["https://github.com/therajatspace"]
+}
 ```
+
+Input key `same_as` (snake_case) becomes output key `sameAs` (camelCase,
+per Schema.org spec). `logo()` and `sameAs()` validate every URL.
 
 ---
 
 # WebSite Schema
 
-The website schema class is:
-
 ```php
 Therajatspace\Larakit\SEO\Schema\WebSiteSchema
 ```
 
-It automatically uses:
-
-```json
-"@type": "WebSite"
-```
-
-Example:
+Automatically uses `"@type": "WebSite"`.
 
 ```php
-use Therajatspace\Larakit\SEO\Schema\WebSiteSchema;
-
-$website = new WebSiteSchema();
-
-$website
-    ->name('The Rajat Space')
-    ->url('https://therajatspace.in')
-    ->description('A freelancing and technology service.');
+Seo::website([
+    'name' => 'The Rajat Space',
+    'url' => 'https://therajatspace.in',
+    'description' => 'Technology and freelancing services.',
+]);
 ```
 
 ## Publisher relationship
 
-A website can reference its publisher:
-
 ```php
-$website->publisher(
-    'https://therajatspace.in/#organization'
-);
+$website->publisher('https://therajatspace.in/#organization');
 ```
-
-The resulting structure is:
 
 ```json
 "publisher": {
@@ -983,539 +831,400 @@ The resulting structure is:
 
 # Breadcrumb Schema
 
-The breadcrumb schema class is:
-
 ```php
 Therajatspace\Larakit\SEO\Schema\BreadcrumbSchema
 ```
 
-It automatically uses:
-
-```json
-"@type": "BreadcrumbList"
-```
-
-Breadcrumb items can be added fluently:
+Automatically uses `"@type": "BreadcrumbList"`.
 
 ```php
-use Therajatspace\Larakit\SEO\Schema\BreadcrumbSchema;
-
-$breadcrumbs = new BreadcrumbSchema();
-
-$breadcrumbs
+Seo::breadcrumbs()
     ->item('Home', 'https://example.com')
     ->item('Blog', 'https://example.com/blog')
-    ->item(
-        'Laravel',
-        'https://example.com/blog/laravel'
-    );
+    ->item('Laravel', 'https://example.com/blog/laravel');
 ```
 
-The resulting `itemListElement` contains automatically generated
-positions:
-
 ```json
-"itemListElement": [
+{
+  "@type": "BreadcrumbList",
+  "itemListElement": [
     {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://example.com"
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://example.com"
     },
     {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Blog",
-        "item": "https://example.com/blog"
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Blog",
+      "item": "https://example.com/blog"
     },
     {
-        "@type": "ListItem",
-        "position": 3,
-        "name": "Laravel",
-        "item": "https://example.com/blog/laravel"
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Laravel",
+      "item": "https://example.com/blog/laravel"
     }
-]
-```
-
-The important part is that developers do not have to manually calculate
-the positions.
-
----
-
-# Creating Schemas from Arrays
-
-Schema objects can be created from structured arrays through
-`SchemaManager`.
-
-For example:
-
-```php
-$organization = $schemaManager->organization([
-    'name' => 'LaraKit',
-    'url' => 'https://example.com',
-    'logo' => 'https://example.com/logo.png',
-    'same_as' => [
-        'https://github.com/example',
-    ],
-]);
-```
-
-The manager creates the correct schema object and populates it from the
-supplied data.
-
-This is useful when schema configuration comes from:
-
-- database records
-- configuration files
-- controllers
-- CMS data
-- application services
-
-The schema-specific `fromArray()` methods convert supported fields
-through their corresponding methods, allowing validation and
-normalization to remain inside the schema classes.
-
----
-
-# Schema IDs
-
-LaraKit supports stable schema identifiers using JSON-LD `@id`.
-
-A schema ID allows one entity to be referenced from another schema
-without duplicating the entire entity.
-
-For example:
-
-```text
-https://example.com/#organization
-```
-
-can represent the site's organization.
-
-Another schema can then reference it:
-
-```json
-"publisher": {
-    "@id": "https://example.com/#organization"
+  ]
 }
 ```
 
-This is preferable to repeatedly embedding a complete Organization
-object when the same organization is already represented elsewhere in
-the graph.
+`position` is auto-calculated on each `->item()` call — never supplied
+manually. Each URL is validated.
 
 ---
 
-# Schema Context
+# The Generic Escape Hatch
 
-The schema context is represented by:
-
-```php
-Therajatspace\Larakit\SEO\Schema\SchemaContext
-```
-
-It stores:
-
-- the base URL
-- the current page URL
-
-Example:
+For any Schema.org type without a dedicated class (`Event`, `Recipe`,
+`FAQPage`, `Person`, ...), use the base object directly:
 
 ```php
-$context = new SchemaContext(
-    'https://example.com',
-    'https://example.com/blog/laravel'
-);
+Seo::schema()
+    ->type('Person')
+    ->name('Siddharth Sharma')
+    ->property('jobTitle', 'Software Engineer')
+    ->property('worksFor', ['@type' => 'Organization', 'name' => 'The Rajat Space']);
 ```
 
-The context can generate IDs based on the site's base URL or the current
-page URL.
+> **Note:** unlike `article()` / `organization()` / etc., `schema()`
+> does **not** auto-assign an `@id`. Call `->id(...)` yourself if it
+> needs to be referenceable.
 
-For example:
+## Rendering into one JSON-LD block
 
-```text
-base URL:
-https://example.com
+Every schema created via the factory methods is pushed into one shared
+`SchemaGraph`. It renders as a single `<script>` tag wrapping all
+schemas in one `@graph` array, using `JSON_UNESCAPED_SLASHES |
+JSON_UNESCAPED_UNICODE` (so URLs print cleanly, without escaped
+slashes).
 
-organization:
-https://example.com/#organization
-```
-
-and:
-
-```text
-current URL:
-https://example.com/blog/laravel
-
-article:
-https://example.com/blog/laravel/#article
-```
-
-The context centralizes URL and ID generation instead of making every
-schema manually construct these strings.
-
----
-
-# Schema References
-
-LaraKit has a small `SchemaReference` value object for representing
-references between entities.
-
-Conceptually:
-
-```text
-Organization
-     ↑
-     │ @id
-     │
-Article.publisher
-```
-
-Instead of embedding:
-
-```json
-"publisher": {
-    "@type": "Organization",
-    "name": "The Rajat Space",
-    "url": "https://therajatspace.in"
-}
-```
-
-another schema can simply refer to:
-
-```json
-"publisher": {
-    "@id": "https://therajatspace.in/#organization"
-}
-```
-
-This keeps the JSON-LD graph concise and makes relationships explicit.
-
----
-
-# Schema Graph
-
-LaraKit contains:
+## Introspection
 
 ```php
-Therajatspace\Larakit\SEO\Schema\SchemaGraph
+app(SchemaManager::class)->count();               // int — schemas in the graph
+app(SchemaManager::class)->findByType('Article');  // ?SchemaObject — first match, or null
 ```
-
-The graph is the conceptual layer that allows multiple schema entities
-to exist together as one JSON-LD graph.
-
-Instead of thinking of structured data as unrelated JSON objects:
-
-```text
-Organization
-Website
-Article
-Breadcrumb
-Product
-```
-
-LaraKit can treat them as related nodes:
-
-```text
-                 Organization
-                 /          \
-                /            \
-          publisher        publisher
-              /                \
-          WebSite             Article
-                                 |
-                              isPartOf
-                                 |
-                              WebSite
-```
-
-This is particularly useful for larger pages where several entities
-describe the same website and need to reference each other.
-
-The graph approach is one of the reasons LaraKit has separate concepts
-for:
-
-- schema objects
-- IDs
-- references
-- relationships
-- relationship resolution
-- graph rendering
 
 ---
 
 # Schema Relationships
 
-A schema relationship is a connection from one schema entity to another.
+Turns separate JSON-LD objects into one connected graph, which is what
+search engines actually want to see. Handled by
+`SchemaRelationshipResolver` (automatic) and `SchemaManager::connect()`
+(manual).
 
-Examples include:
+## Automatic linking
 
-```text
-Article → publisher → Organization
-Article → isPartOf → WebSite
-WebSite → publisher → Organization
-```
+Every time `SchemaManager::render()` runs, it calls
+`$this->relationshipResolver->resolve($this->graph)` first. The resolver
+looks through the whole graph for one of each type and, if both schemas
+already have an `@id`, wires them together:
 
-The relationship is normally represented using an `@id` reference.
+| From      | Property    | To             |
+| --------- | ----------- | -------------- |
+| `WebSite` | `publisher` | `Organization` |
+| `Article` | `publisher` | `Organization` |
+| `Article` | `isPartOf`  | `WebSite`      |
 
-For example:
+You don't call anything for this to happen — just create the schemas and
+let `@seo` render.
+
+### Example — automatic linking, minimal setup
 
 ```php
-$article->publisher(
-    'https://example.com/#organization'
-);
+Seo::organization(['name' => 'The Rajat Space', 'url' => 'https://therajatspace.in']);
+Seo::website(['name' => 'The Rajat Space', 'url' => 'https://therajatspace.in']);
+Seo::article(['name' => 'Understanding Laravel Service Providers']);
 ```
 
-creates:
+Output (excerpt, `@graph` array):
 
 ```json
-"publisher": {
-    "@id": "https://example.com/#organization"
+{"@type":"Organization","@id":"https://example.com/#organization"},
+{"@type":"WebSite","@id":"https://example.com/#website",
+  "publisher": {"@id": "https://example.com/#organization"}},
+{"@type":"Article","@id":"https://example.com/blog/.../#article",
+  "publisher": {"@id": "https://example.com/#organization"},
+  "isPartOf": {"@id": "https://example.com/#website"}}
+```
+
+Nobody called `->publisher()` or `->isPartOf()` — all three relationships
+were wired automatically.
+
+### Example — manual values are never overwritten
+
+```php
+Seo::organization(['name' => 'Org A', 'url' => 'https://a.example']);
+$article = Seo::article(['name' => 'My Post']);
+$article->publisher('https://some-other-publisher.example/#organization');
+```
+
+The resolver checks whether the target property already exists on the
+source schema before writing to it. Since `publisher` is already set,
+the resolver skips it — your manual link always wins over the automatic
+one.
+
+### Example — partial graphs never crash
+
+```php
+Seo::article(['name' => 'Solo Post']); // no Organization, no WebSite present
+```
+
+Every relationship condition checks that both schemas exist and both
+have an `@id` before connecting. If either is missing, that relationship
+is silently skipped — no relationships are added, and no error is
+thrown.
+
+## Manual linking: `SchemaManager::connect()`
+
+For relationships the automatic resolver doesn't know about (it only
+knows the three Organization/WebSite/Article combinations above), use
+the general-purpose connector directly:
+
+```php
+$schemaManager = app(\Therajatspace\Larakit\SEO\Schema\SchemaManager::class);
+
+$org = Seo::organization(['name' => 'The Rajat Space', 'url' => 'https://therajatspace.in']);
+$product = Seo::product(['name' => 'LaraKit Pro']);
+
+$schemaManager->connect($product, 'manufacturer', $org);
+```
+
+```json
+{
+  "@type": "Product",
+  "@id": "https://example.com/products/.../#product",
+  "name": "LaraKit Pro",
+  "manufacturer": { "@id": "https://example.com/#organization" }
 }
 ```
 
-This allows the same Organization node to be reused by several schemas.
+`connect()` accepts any property name string, so it can express any
+Schema.org relationship, not just the three built-in ones.
+
+## Config-driven Organization/WebSite: `configureSchemas()`
+
+> **Gotcha — not automatic:** `config/larakit.php` ships with an
+> `organization` and `website` section, which reasonably suggests
+> filling them in creates those schemas on every page automatically. **It
+> does not.** You must explicitly call:
+
+```php
+// e.g. in AppServiceProvider::boot()
+Seo::configureSchemas(config('larakit.seo'));
+```
+
+This checks `config['schema']['auto']` (default `true`) and, unless
+disabled, creates Organization/WebSite schemas from config — but only if
+each has a non-empty `name`. Calling this once site-wide means every
+Article automatically gets linked to your Organization/WebSite via the
+resolver above, without repeating the setup per page.
 
 ---
 
-# Automatic Schema Relationship Resolution
+# Configuration Reference
 
-LaraKit also contains:
-
-```php
-Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver
-```
-
-Its purpose is to resolve relationships between schema objects when
-building the final graph.
-
-The idea is:
-
-```text
-Schema Objects
-      ↓
-Identify IDs
-      ↓
-Identify references
-      ↓
-Resolve relationships
-      ↓
-Build coherent graph
-      ↓
-Render JSON-LD
-```
-
-This means developers can work with normal schema objects and references
-without manually assembling a giant `@graph` array.
-
-The relationship system is intentionally based on ordinary PHP objects
-and arrays rather than a separate database-style graph engine.
-
----
-
-# Writing JSON-LD with LaraKit
-
-The preferred way to write JSON-LD is to use schema objects rather than
-manually constructing the final JSON.
-
-For example, instead of:
+`config/larakit.php` in full:
 
 ```php
-$data = [
-    '@context' => 'https://schema.org',
-    '@type' => 'Article',
-    'headline' => 'My Article',
-    'author' => [
-        '@type' => 'Person',
-        'name' => 'Siddharth Sharma',
+return [
+    'seo' => [
+        'enabled' => true,
+        'defaults' => [
+            'title' => null,       // fallback <title> when not set per-page
+            'description' => null, // fallback meta description
+            'robots' => null,      // fallback robots directive
+        ],
+        'schema' => [
+            'auto' => true,        // used by configureSchemas() — see Schema Relationships
+        ],
+        'organization' => [
+            'name' => null, 'url' => null, 'logo' => null, 'same_as' => [],
+        ],
+        'website' => [
+            'name' => null, 'url' => null, 'description' => null,
+        ],
     ],
 ];
 ```
 
-you can write:
+The package merges its default configuration into Laravel's
+configuration system, so application-specific values can be kept in the
+Laravel application's configuration environment rather than hard-coded
+inside the package.
 
-```php
-$article = new ArticleSchema();
-
-$article
-    ->headline('My Article')
-    ->author('Siddharth Sharma');
-```
-
-This gives the package a place to perform validation and to evolve the
-schema architecture independently of application code.
-
-The final structure can still be inspected:
-
-```php
-$data = $article->toArray();
-```
-
-So LaraKit does not hide the JSON-LD representation from the developer.
+> **Remember:** the `organization` / `website` / `schema.auto` keys only
+> take effect if you explicitly call
+> `Seo::configureSchemas(config('larakit.seo'))` — see [Schema
+> Relationships](#schema-relationships).
 
 ---
 
-# A Complete Schema Example
-
-A common website can have an Organization, Website, and Article.
-
-Conceptually:
-
-```text
-Organization
-     │
-     ├── Website.publisher
-     │
-     └── Article.publisher
-
-Website
-     ↑
-     │ isPartOf
-     │
-Article
-```
-
-The individual schemas can be created like this:
+# Full End-to-End Example
 
 ```php
-$organization = $schemaManager->organization([
-    'name' => 'The Rajat Space',
-    'url' => 'https://therajatspace.in',
-    'logo' => 'https://therajatspace.in/logo.png',
-]);
+// AppServiceProvider::boot() — runs once, site-wide
+Seo::configureSchemas(config('larakit.seo'));
 
-$website = $schemaManager->website([
-    'name' => 'The Rajat Space',
-    'url' => 'https://therajatspace.in',
-    'description' => 'Technology and freelancing services.',
-]);
+// ArticleController::show()
+Seo::title('Understanding Laravel Service Providers')
+   ->description('A deep dive into how Laravel wires services together.')
+   ->canonical('https://example.com/blog/laravel-service-providers');
 
-$article = $schemaManager->article([
-    'name' => 'Understanding Laravel',
-    'headline' => 'Understanding Laravel',
-    'url' => 'https://therajatspace.in/blog/laravel',
-    'author' => 'Siddharth Sharma',
+Seo::openGraph()
+   ->type('article')
+   ->image('https://example.com/images/laravel-og.jpg', width: 1200, height: 630);
+
+Seo::twitter()
+   ->card('summary_large_image')
+   ->site('@laravelphp');
+
+Seo::article([
+    'headline'      => 'Understanding Laravel Service Providers',
+    'author'        => 'Siddharth Sharma',
     'datePublished' => '2026-08-17',
 ]);
+
+Seo::breadcrumbs()
+    ->item('Home', 'https://example.com')
+    ->item('Blog', 'https://example.com/blog')
+    ->item('Laravel Service Providers', 'https://example.com/blog/laravel-service-providers');
 ```
 
-Relationships can then reference the appropriate schema IDs.
+One `@seo` directive in the layout now renders: title + meta description
 
-The important design principle is that the developer works with
-**entities and relationships**, while LaraKit handles the JSON-LD
-representation.
+- canonical, full Open Graph (with type and image), a Twitter Card, and
+  one JSON-LD `@graph` containing Organization, WebSite, and Article
+  (auto-linked to both) plus a Breadcrumb list — from roughly 15 lines of
+  page-level code, plus one line of site-wide setup.
 
----
+## Output (from `@seo`)
 
-# Rendering JSON-LD
-
-Once schemas are registered with `SchemaManager`, the manager can render
-them as JSON-LD.
-
-The output follows the standard structure:
+> This assumes `config/larakit.php`'s `organization` and `website`
+> sections have been filled in (e.g. with `The Rajat Space` /
+> `https://therajatspace.in`) — `configureSchemas()` only creates those
+> two schemas when a `name` is present, per the
+> [`configureSchemas()` gotcha](#schema-relationships) above.
 
 ```html
+<title>Understanding Laravel Service Providers</title>
+<meta
+  name="description"
+  content="A deep dive into how Laravel wires services together."
+/>
+<link
+  rel="canonical"
+  href="https://example.com/blog/laravel-service-providers"
+/>
+<meta property="og:title" content="Understanding Laravel Service Providers" />
+<meta
+  property="og:description"
+  content="A deep dive into how Laravel wires services together."
+/>
+<meta property="og:type" content="article" />
+<meta
+  property="og:url"
+  content="https://example.com/blog/laravel-service-providers"
+/>
+<meta property="og:image" content="https://example.com/images/laravel-og.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Understanding Laravel Service Providers" />
+<meta
+  name="twitter:description"
+  content="A deep dive into how Laravel wires services together."
+/>
+<meta
+  name="twitter:image"
+  content="https://example.com/images/laravel-og.jpg"
+/>
+<meta name="twitter:site" content="@laravelphp" />
 <script type="application/ld+json">
   {
-      "@context": "https://schema.org",
-      "@graph": [
-          ...
-      ]
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://example.com/#organization",
+        "name": "The Rajat Space",
+        "url": "https://therajatspace.in"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://example.com/#website",
+        "name": "The Rajat Space",
+        "url": "https://therajatspace.in",
+        "publisher": { "@id": "https://example.com/#organization" }
+      },
+      {
+        "@type": "Article",
+        "@id": "https://example.com/blog/laravel-service-providers/#article",
+        "headline": "Understanding Laravel Service Providers",
+        "author": { "@type": "Person", "name": "Siddharth Sharma" },
+        "datePublished": "2026-08-17",
+        "publisher": { "@id": "https://example.com/#organization" },
+        "isPartOf": { "@id": "https://example.com/#website" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://example.com"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Blog",
+            "item": "https://example.com/blog"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Laravel Service Providers",
+            "item": "https://example.com/blog/laravel-service-providers"
+          }
+        ]
+      }
+    ]
   }
 </script>
 ```
 
-The graph may contain:
-
-- Organization
-- WebSite
-- Article
-- Product
-- BreadcrumbList
-- other supported schema objects
-
-The schema objects themselves remain normal PHP objects until rendering.
-
-This makes them easy to unit test.
-
-For example:
-
-```php
-$data = $organization->toArray();
-
-$this->assertSame(
-    'Organization',
-    $data['@type']
-);
-```
+Notice the `Organization` and `WebSite` nodes were never created on this
+page directly — they came from the site-wide `configureSchemas()` call —
+and yet `Article.publisher`, `Article.isPartOf`, and `WebSite.publisher`
+were all wired automatically by the relationship resolver, with no
+`->publisher()` or `->isPartOf()` calls anywhere in the controller.
 
 ---
 
-# Laravel Service Container Integration
+# Known Limitations
 
-LaraKit registers its core managers with Laravel's service container.
-
-The main services include:
-
-```text
-SeoManager
-OpenGraphManager
-TwitterCardManager
-SchemaManager
-SchemaConfigurator
-SchemaRelationshipResolver
-SchemaContext
-```
-
-This allows Laravel applications to resolve them normally:
-
-```php
-$seo = app(
-    \Therajatspace\Larakit\SEO\SeoManager::class
-);
-```
-
-or:
-
-```php
-$schema = app(
-    \Therajatspace\Larakit\SEO\Schema\SchemaManager::class
-);
-```
-
-The service provider is:
-
-```php
-Therajatspace\Larakit\LaraKitServiceProvider
-```
-
-Laravel discovers this provider through the `extra.laravel.providers`
-entry in `composer.json`.
-
----
-
-# Configuration
-
-LaraKit provides:
-
-```text
-config/larakit.php
-```
-
-The package merges its default configuration into Laravel's
-configuration system.
-
-This means application-specific configuration can be kept in the Laravel
-application's configuration environment rather than hard-coded inside
-the package.
-
-The SEO manager also receives the configured SEO defaults from:
-
-```php
-config('larakit.seo.defaults', [])
-```
-
-This allows common defaults to be centralized.
+- **Only the SEO module is implemented.** Authentication, Admin Panel,
+  and Image Optimization are placeholders in the installer with no
+  working code behind them.
+- **`configureSchemas()` must be called manually.** Config-driven
+  Organization/WebSite schemas do not appear automatically just by
+  filling in `config/larakit.php`.
+- **Article authorship is name-only.** `ArticleSchema::author()` always
+  outputs a `Person` type; there is no built-in way to attribute an
+  Article to an Organization.
+- **Twitter Cards support only a single image**, unlike Open Graph,
+  which accepts multiple.
+- **Automatic schema relationships cover only three fixed pairings**
+  (WebSite→Organization, Article→Organization, Article→WebSite).
+  Anything else — e.g. Product→Organization — requires the manual
+  `SchemaManager::connect()` call.
+- **Product `@id` is based on the current request URL**, not the `url`
+  field you supply in the data array — keep these aligned when building
+  schemas outside of the page they represent.
 
 ---
 
@@ -1702,8 +1411,6 @@ module rather than coupling it to the SEO system.
 
 # Roadmap
 
-The general roadmap is:
-
 ```text
 v1.0.0
   │
@@ -1813,121 +1520,4 @@ See the `LICENSE` file for the complete license text.
 
 ---
 
-# Quick Reference
-
-## Install
-
-```bash
-composer require therajatspace/larakit
-```
-
-## Run the installer
-
-```bash
-php artisan larakit:install
-```
-
-## Install selected modules through flags
-
-```bash
-php artisan larakit:install --seo
-```
-
-```bash
-php artisan larakit:install --auth
-```
-
-```bash
-php artisan larakit:install --admin
-```
-
-```bash
-php artisan larakit:install --image
-```
-
-```bash
-php artisan larakit:install --all
-```
-
-## Resolve SEO manager
-
-```php
-$seo = app(
-    \Therajatspace\Larakit\SEO\SeoManager::class
-);
-```
-
-## Use the facade
-
-```php
-use Therajatspace\Larakit\Facades\Seo;
-
-Seo::title('My Page');
-```
-
-## Use the Blade directive
-
-```blade
-@seo
-```
-
-## Create a schema
-
-```php
-$organization = new \Therajatspace\Larakit\SEO\Schema\OrganizationSchema();
-
-$organization
-    ->name('LaraKit')
-    ->url('https://example.com')
-    ->logo('https://example.com/logo.png');
-```
-
-## Inspect a schema
-
-```php
-$data = $organization->toArray();
-```
-
-## Create a breadcrumb
-
-```php
-$breadcrumbs
-    ->item('Home', 'https://example.com')
-    ->item('Blog', 'https://example.com/blog')
-    ->item('Laravel', 'https://example.com/blog/laravel');
-```
-
-## Run tests
-
-```bash
-composer test
-```
-
----
-
-## LaraKit
-
-**Build smarter. Optimize better. Ship faster.**
-
-### Author
-
-**Siddharth Sharma**
-
-Email:
-`siddharthsharmaofficial2@gmail.com`
-
-### The Rajat Space
-
-LaraKit is developed under **The Rajat Space**, a freelancing service.
-
-Email:
-`contact@therajatspace.in`
-
-Website:
-`https://therajatspace.in`
-
-GitHub:
-`https://github.com/therajatspace`
-
-LaraKit Documentation:
-`https://therajatspace.in/larakit`
+**LaraKit — Build smarter. Optimize better. Ship faster.**
