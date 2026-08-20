@@ -9,6 +9,7 @@ use Therajatspace\Larakit\SEO\Schema\SchemaObject;
 use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
 use Therajatspace\Larakit\SEO\Schema\PersonSchema;
 use Therajatspace\Larakit\SEO\Schema\FAQPageSchema;
+use Therajatspace\Larakit\SEO\Schema\WebPageSchema;
 
 class SchemaManager
 {
@@ -105,6 +106,15 @@ class SchemaManager
         return $this
             ->create(FAQPageSchema::class)
             ->id($this->pageId('faq'))
+            ->fromArray($data);
+    }
+
+
+    public function webPage(array $data = []): WebPageSchema
+    {
+        return $this
+            ->create(WebPageSchema::class)
+            ->id($this->pageId('webpage'))
             ->fromArray($data);
     }
 

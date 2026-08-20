@@ -9,6 +9,7 @@ use Therajatspace\Larakit\SEO\Schema\SchemaContext;
 use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
 use Therajatspace\Larakit\SEO\Schema\PersonSchema;
 use Therajatspace\Larakit\SEO\Schema\FAQPageSchema;
+use Therajatspace\Larakit\SEO\Schema\WebPageSchema;
 
 class SchemaManagerTest extends TestCase
 {
@@ -917,6 +918,166 @@ class SchemaManagerTest extends TestCase
         $this->assertSame(
             [],
             $faq->toArray()['mainEntity']
+        );
+    }
+
+    public function test_web_page_gets_automatic_page_id(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $page = $manager->webPage([
+            'name' => 'About Us',
+        ]);
+
+        $this->assertSame(
+            'https://example.com/test/#webpage',
+            $page->toArray()['@id']
+        );
+    }
+
+    public function test_manager_can_create_web_page(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $page = $manager->webPage([
+            'name' => 'About Us',
+            'description' => 'About our company.',
+            'url' => 'https://example.com/about',
+        ]);
+
+        $this->assertInstanceOf(
+            WebPageSchema::class,
+            $page
+        );
+
+        $this->assertSame(
+            'WebPage',
+            $page->toArray()['@type']
+        );
+
+        $this->assertSame(
+            'About Us',
+            $page->toArray()['name']
+        );
+    }
+
+    public function test_web_page_is_rendered_in_graph(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $manager->webPage([
+            'name' => 'About Us',
+            'description' => 'About our company.',
+        ]);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"WebPage"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"name":"About Us"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@id":"https://example.com/test/#webpage"',
+            $result
+        );
+    }
+
+    public function test_web_page_produces_valid_json_structure(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $manager->webPage([
+            'name' => 'About Us',
+            'url' => 'https://example.com/about',
+            'inLanguage' => 'en-US',
+        ]);
+
+        $result = $manager->render();
+
+        preg_match(
+            '/<script type="application\/ld\+json">(.*?)<\/script>/s',
+            $result,
+            $matches
+        );
+
+        $this->assertNotEmpty($matches);
+
+        $data = json_decode(
+            $matches[1],
+            true
+        );
+
+        $this->assertSame(
+            JSON_ERROR_NONE,
+            json_last_error()
+        );
+
+        $page = null;
+
+        foreach ($data['@graph'] as $node) {
+            if (($node['@type'] ?? null) === 'WebPage') {
+                $page = $node;
+                break;
+            }
+        }
+
+        $this->assertNotNull($page);
+
+        $this->assertSame(
+            'WebPage',
+            $page['@type']
+        );
+
+        $this->assertSame(
+            'https://example.com/test/#webpage',
+            $page['@id']
+        );
+
+        $this->assertSame(
+            'About Us',
+            $page['name']
+        );
+
+        $this->assertSame(
+            'https://example.com/about',
+            $page['url']
+        );
+
+        $this->assertSame(
+            'en-US',
+            $page['inLanguage']
+        );
+    }
+
+
+    public function test_web_page_can_coexist_with_other_schemas(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $manager->webPage([
+            'name' => 'About Us',
+        ]);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"Organization"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"WebPage"',
+            $result
         );
     }
 }
