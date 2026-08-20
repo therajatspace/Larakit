@@ -8,6 +8,7 @@ use Therajatspace\Larakit\SEO\Schema\SchemaObject;
 use Therajatspace\Larakit\SEO\Schema\SchemaContext;
 use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
 use Therajatspace\Larakit\SEO\Schema\PersonSchema;
+use Therajatspace\Larakit\SEO\Schema\FAQPageSchema;
 
 class SchemaManagerTest extends TestCase
 {
@@ -658,5 +659,264 @@ class SchemaManagerTest extends TestCase
         $person->fromArray([
             'sameAs' => 'not-a-url',
         ]);
+    }
+    public function test_faq_page_gets_automatic_page_id(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $faq = $manager->faqPage();
+
+        $this->assertSame(
+            'https://example.com/test/#faq',
+            $faq->toArray()['@id']
+        );
+    }
+    public function test_manager_can_create_faq_page(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $faq = $manager->faqPage([
+            'name' => 'Frequently Asked Questions',
+            'questions' => [
+                [
+                    'question' => 'What is LaraKit?',
+                    'answer' => 'A Laravel SEO toolkit.',
+                ],
+            ],
+        ]);
+
+        $this->assertInstanceOf(
+            FAQPageSchema::class,
+            $faq
+        );
+
+        $data = $faq->toArray();
+
+        $this->assertSame(
+            'FAQPage',
+            $data['@type']
+        );
+
+        $this->assertSame(
+            'Frequently Asked Questions',
+            $data['name']
+        );
+
+        $this->assertCount(
+            1,
+            $data['mainEntity']
+        );
+    }
+    public function test_faq_page_is_rendered_as_valid_json_ld(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $manager->faqPage([
+            'name' => 'Frequently Asked Questions',
+            'questions' => [
+                [
+                    'question' => 'What is LaraKit?',
+                    'answer' => 'A Laravel SEO toolkit.',
+                ],
+                [
+                    'question' => 'Is LaraKit open source?',
+                    'answer' => 'Yes.',
+                ],
+            ],
+        ]);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '<script type="application/ld+json">'
+            )
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"FAQPage"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"Question"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"Answer"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"name":"What is LaraKit?"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"text":"A Laravel SEO toolkit."',
+            $result
+        );
+    }
+    public function test_faq_page_produces_correct_json_structure(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $manager->faqPage([
+            'questions' => [
+                [
+                    'question' => 'What is LaraKit?',
+                    'answer' => 'A Laravel SEO toolkit.',
+                ],
+            ],
+        ]);
+
+        $result = $manager->render();
+
+        preg_match(
+            '/<script type="application\/ld\+json">(.*?)<\/script>/s',
+            $result,
+            $matches
+        );
+
+        $this->assertNotEmpty($matches);
+
+        $data = json_decode(
+            $matches[1],
+            true
+        );
+
+        $this->assertSame(
+            JSON_ERROR_NONE,
+            json_last_error()
+        );
+
+        $faq = $data['@graph'][0];
+
+        $this->assertSame(
+            'FAQPage',
+            $faq['@type']
+        );
+
+        $this->assertSame(
+            'https://example.com/test/#faq',
+            $faq['@id']
+        );
+
+        $this->assertCount(
+            1,
+            $faq['mainEntity']
+        );
+
+        $question = $faq['mainEntity'][0];
+
+        $this->assertSame(
+            'Question',
+            $question['@type']
+        );
+
+        $this->assertSame(
+            'What is LaraKit?',
+            $question['name']
+        );
+
+        $this->assertSame(
+            'Answer',
+            $question['acceptedAnswer']['@type']
+        );
+
+        $this->assertSame(
+            'A Laravel SEO toolkit.',
+            $question['acceptedAnswer']['text']
+        );
+    }
+    public function test_faq_page_can_coexist_with_other_schemas(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $faq = $manager->faqPage([
+            'name' => 'FAQ',
+            'questions' => [
+                [
+                    'question' => 'What is LaraKit?',
+                    'answer' => 'A Laravel SEO toolkit.',
+                ],
+            ],
+        ]);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"Organization"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"FAQPage"',
+            $result
+        );
+
+        $this->assertSame(
+            'https://example.com/#organization',
+            $organization->toArray()['@id']
+        );
+
+        $this->assertSame(
+            'https://example.com/test/#faq',
+            $faq->toArray()['@id']
+        );
+    }
+    public function test_faq_page_has_no_unexpected_automatic_relationships(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $faq = $manager->faqPage([
+            'questions' => [
+                [
+                    'question' => 'What is LaraKit?',
+                    'answer' => 'A Laravel SEO toolkit.',
+                ],
+            ],
+        ]);
+
+        $manager->render();
+
+        $data = $faq->toArray();
+
+        $this->assertArrayNotHasKey(
+            'publisher',
+            $data
+        );
+
+        $this->assertArrayNotHasKey(
+            'isPartOf',
+            $data
+        );
+    }
+    public function test_faq_page_with_no_questions_can_be_rendered(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $faq = $manager->faqPage([
+            'name' => 'Frequently Asked Questions',
+        ]);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"FAQPage"',
+            $result
+        );
+
+        $this->assertSame(
+            [],
+            $faq->toArray()['mainEntity']
+        );
     }
 }

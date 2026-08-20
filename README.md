@@ -31,21 +31,22 @@ unnecessary abstraction.
 13. [Product Schema](#product-schema)
 14. [Organization Schema](#organization-schema)
 15. [WebSite Schema](#website-schema)
-    15.1 [Person Schema] (#person-schema)
-16. [Breadcrumb Schema](#breadcrumb-schema)
-17. [The Generic Escape Hatch](#the-generic-escape-hatch)
-18. [Schema Relationships](#schema-relationships)
-19. [Configuration Reference](#configuration-reference)
-20. [Full End-to-End Example](#full-end-to-end-example)
-21. [Known Limitations](#known-limitations)
-22. [Testing](#testing)
-23. [Architecture](#architecture)
-24. [Design Philosophy](#design-philosophy)
-25. [Current Modules](#current-modules)
-26. [Roadmap](#roadmap)
-27. [Contributing](#contributing)
-28. [Author and The Rajat Space](#author-and-the-rajat-space)
-29. [License](#license)
+16. [Person Schema](#person-schema)
+17. [FAQPage Schema](#faqpage-schema)
+18. [Breadcrumb Schema](#breadcrumb-schema)
+19. [The Generic Escape Hatch](#the-generic-escape-hatch)
+20. [Schema Relationships](#schema-relationships)
+21. [Configuration Reference](#configuration-reference)
+22. [Full End-to-End Example](#full-end-to-end-example)
+23. [Known Limitations](#known-limitations)
+24. [Testing](#testing)
+25. [Architecture](#architecture)
+26. [Design Philosophy](#design-philosophy)
+27. [Current Modules](#current-modules)
+28. [Roadmap](#roadmap)
+29. [Contributing](#contributing)
+30. [Author and The Rajat Space](#author-and-the-rajat-space)
+31. [License](#license)
 
 ---
 
@@ -848,8 +849,36 @@ Seo::person([
     'url' => 'https://example.com/about/siddharth',
     'sameAs' => 'https://github.com/example',
 ]);
+  ```
 
----
+  ---
+
+  # FAQPage Schema
+
+  LaraKit provides a dedicated `FAQPageSchema` for generating FAQ structured data.
+
+  ## Basic usage
+
+  ```php
+  use Therajatspace\Larakit\Facades\Seo;
+
+  Seo::faqPage([
+    'name' => 'Frequently Asked Questions',
+    'description' => 'Frequently asked questions about LaraKit.',
+    'url' => 'https://example.com/faq',
+    'questions' => [
+      [
+        'question' => 'What is LaraKit?',
+        'answer' => 'LaraKit is a Laravel SEO toolkit.',
+      ],
+      [
+        'question' => 'Is LaraKit open source?',
+        'answer' => 'Yes, LaraKit is open source.',
+      ],
+    ],
+  ]);
+  ```
+
 
 # Breadcrumb Schema
 
