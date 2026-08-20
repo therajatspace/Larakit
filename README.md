@@ -932,7 +932,7 @@ Output:
 }
 ```
 
-## Breadcrumbs
+# Breadcrumbs
 
 Automatically uses `"@type": "BreadcrumbList"`.
 
