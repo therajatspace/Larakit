@@ -833,58 +833,104 @@ $website->publisher('https://therajatspace.in/#organization');
 
 # Person Schema
 
-LaraKit provides a dedicated `PersonSchema` for representing people such as authors, developers, creators, employees, speakers, and other individuals.
+```php
+Therajatspace\Larakit\SEO\Schema\PersonSchema
+```
 
-````php
-use Therajatspace\Larakit\Facades\Seo;
-
-Seo::person([
-    'name' => 'Siddharth Sharma',
-    'givenName' => 'Siddharth',
-    'familyName' => 'Sharma',
-    'jobTitle' => 'Laravel Developer',
-    'email' => 'siddharth@example.com',
-    'telephone' => '+91-9876543210',
-    'image' => 'https://example.com/images/siddharth.jpg',
-    'url' => 'https://example.com/about/siddharth',
-    'sameAs' => 'https://github.com/example',
-]);
-  ```
-
-  ---
-
-  # FAQPage Schema
-
-  LaraKit provides a dedicated `FAQPageSchema` for generating FAQ structured data.
-
-  ## Basic usage
-
-  ```php
-  use Therajatspace\Larakit\Facades\Seo;
-
-  Seo::faqPage([
-    'name' => 'Frequently Asked Questions',
-    'description' => 'Frequently asked questions about LaraKit.',
-    'url' => 'https://example.com/faq',
-    'questions' => [
-      [
-        'question' => 'What is LaraKit?',
-        'answer' => 'LaraKit is a Laravel SEO toolkit.',
-      ],
-      [
-        'question' => 'Is LaraKit open source?',
-        'answer' => 'Yes, LaraKit is open source.',
-      ],
-    ],
-  ]);
-  ```
-
-
-# Breadcrumb Schema
+Automatically uses `"@type": "Person"`. Used for representing people such
+as authors, developers, creators, employees, and speakers.
 
 ```php
-Therajatspace\Larakit\SEO\Schema\BreadcrumbSchema
-````
+Seo::person([
+    'name'       => 'Siddharth Sharma',
+    'givenName'  => 'Siddharth',
+    'familyName' => 'Sharma',
+    'jobTitle'   => 'Laravel Developer',
+    'email'      => 'siddharth@example.com',
+    'telephone'  => '+91-9876543210',
+    'image'      => 'https://example.com/images/siddharth.jpg',
+    'url'        => 'https://example.com/about/siddharth',
+    'sameAs'     => 'https://github.com/example',
+]);
+```
+
+Output:
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": "https://example.com/about/siddharth/#person",
+  "name": "Siddharth Sharma",
+  "givenName": "Siddharth",
+  "familyName": "Sharma",
+  "jobTitle": "Laravel Developer",
+  "email": "siddharth@example.com",
+  "telephone": "+91-9876543210",
+  "image": "https://example.com/images/siddharth.jpg",
+  "url": "https://example.com/about/siddharth",
+  "sameAs": ["https://github.com/example"]
+}
+```
+
+---
+
+# FAQPage Schema
+
+```php
+Therajatspace\Larakit\SEO\Schema\FAQPageSchema
+```
+
+Automatically uses `"@type": "FAQPage"`. Generates FAQ structured data
+from an array of question/answer pairs.
+
+```php
+Seo::faqPage([
+    'name'        => 'Frequently Asked Questions',
+    'description' => 'Frequently asked questions about LaraKit.',
+    'url'         => 'https://example.com/faq',
+    'questions'   => [
+        [
+            'question' => 'What is LaraKit?',
+            'answer'   => 'LaraKit is a Laravel SEO toolkit.',
+        ],
+        [
+            'question' => 'Is LaraKit open source?',
+            'answer'   => 'Yes, LaraKit is open source.',
+        ],
+    ],
+]);
+```
+
+Output:
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "@id": "https://example.com/faq/#faqpage",
+  "name": "Frequently Asked Questions",
+  "description": "Frequently asked questions about LaraKit.",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is LaraKit?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "LaraKit is a Laravel SEO toolkit."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is LaraKit open source?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, LaraKit is open source."
+      }
+    }
+  ]
+}
+```
 
 Automatically uses `"@type": "BreadcrumbList"`.
 
