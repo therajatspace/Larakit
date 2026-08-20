@@ -31,6 +31,7 @@ unnecessary abstraction.
 13. [Product Schema](#product-schema)
 14. [Organization Schema](#organization-schema)
 15. [WebSite Schema](#website-schema)
+    15.1 [Person Schema] (#person-schema)
 16. [Breadcrumb Schema](#breadcrumb-schema)
 17. [The Generic Escape Hatch](#the-generic-escape-hatch)
 18. [Schema Relationships](#schema-relationships)
@@ -829,11 +830,32 @@ $website->publisher('https://therajatspace.in/#organization');
 
 ---
 
+# Person Schema
+
+LaraKit provides a dedicated `PersonSchema` for representing people such as authors, developers, creators, employees, speakers, and other individuals.
+
+````php
+use Therajatspace\Larakit\Facades\Seo;
+
+Seo::person([
+    'name' => 'Siddharth Sharma',
+    'givenName' => 'Siddharth',
+    'familyName' => 'Sharma',
+    'jobTitle' => 'Laravel Developer',
+    'email' => 'siddharth@example.com',
+    'telephone' => '+91-9876543210',
+    'image' => 'https://example.com/images/siddharth.jpg',
+    'url' => 'https://example.com/about/siddharth',
+    'sameAs' => 'https://github.com/example',
+]);
+
+---
+
 # Breadcrumb Schema
 
 ```php
 Therajatspace\Larakit\SEO\Schema\BreadcrumbSchema
-```
+````
 
 Automatically uses `"@type": "BreadcrumbList"`.
 

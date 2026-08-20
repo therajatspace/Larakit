@@ -7,6 +7,7 @@ use Therajatspace\Larakit\SEO\Schema\WebSiteSchema;
 use Therajatspace\Larakit\SEO\Schema\ProductSchema;
 use Therajatspace\Larakit\SEO\Schema\SchemaObject;
 use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
+use Therajatspace\Larakit\SEO\Schema\PersonSchema;
 
 class SchemaManager
 {
@@ -87,6 +88,14 @@ class SchemaManager
         return $this
             ->create(ProductSchema::class)
             ->id($this->pageId('product'))
+            ->fromArray($data);
+    }
+
+    public function person(array $data = []): PersonSchema
+    {
+        return $this
+            ->create(PersonSchema::class)
+            ->id($this->pageId('person'))
             ->fromArray($data);
     }
 

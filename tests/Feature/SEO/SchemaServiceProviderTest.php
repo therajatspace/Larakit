@@ -86,4 +86,26 @@ class SchemaServiceProviderTest extends TestCase
             $schema->toArray()['@id']
         );
     }
+
+    public function test_person_schema_is_available_from_schema_manager(): void
+    {
+        $manager = app(
+            \Therajatspace\Larakit\SEO\Schema\SchemaManager::class
+        );
+
+        $person = $manager->person([
+            'name' => 'Siddharth Sharma',
+            'url' => 'https://example.com/about',
+        ]);
+
+        $this->assertSame(
+            'Person',
+            $person->toArray()['@type']
+        );
+
+        $this->assertSame(
+            'Siddharth Sharma',
+            $person->toArray()['name']
+        );
+    }
 }

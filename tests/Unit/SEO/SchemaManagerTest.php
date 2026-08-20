@@ -7,6 +7,7 @@ use Therajatspace\Larakit\SEO\Schema\SchemaManager;
 use Therajatspace\Larakit\SEO\Schema\SchemaObject;
 use Therajatspace\Larakit\SEO\Schema\SchemaContext;
 use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
+use Therajatspace\Larakit\SEO\Schema\PersonSchema;
 
 class SchemaManagerTest extends TestCase
 {
@@ -518,5 +519,144 @@ class SchemaManagerTest extends TestCase
             'publisher',
             $article->toArray()
         );
+    }
+
+    // public function test_person_creates_person_schema_with_page_id(): void
+    // {
+    //     $manager = app(\Therajatspace\Larakit\SEO\Schema\SchemaManager::class);
+
+    //     $person = $manager->person([
+    //         'name' => 'Siddharth Sharma',
+    //         'jobTitle' => 'Laravel Developer',
+    //     ]);
+
+    //     $data = $person->toArray();
+
+    //     $this->assertInstanceOf(
+    //         PersonSchema::class,
+    //         $person
+    //     );
+
+    //     $this->assertSame(
+    //         'Person',
+    //         $data['@type']
+    //     );
+
+    //     $this->assertSame(
+    //         'Siddharth Sharma',
+    //         $data['name']
+    //     );
+
+    //     $this->assertSame(
+    //         'Laravel Developer',
+    //         $data['jobTitle']
+    //     );
+
+    //     $this->assertArrayHasKey(
+    //         '@id',
+    //         $data
+    //     );
+
+    //     $this->assertStringContainsString(
+    //         '#person',
+    //         $data['@id']
+    //     );
+    // }
+
+    public function test_person_gets_automatic_page_id(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $person = $manager->person([
+            'name' => 'Siddharth Sharma',
+        ]);
+
+        $this->assertSame(
+            'https://example.com/test/#person',
+            $person->toArray()['@id']
+        );
+    }
+    public function test_person_is_added_to_schema_graph(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $person = $manager->person([
+            'name' => 'Siddharth Sharma',
+        ]);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"Person"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"name":"Siddharth Sharma"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@id":"https://example.com/test/#person"',
+            $result
+        );
+    }
+    public function test_person_can_coexist_with_other_schemas(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $person = $manager->person([
+            'name' => 'Siddharth Sharma',
+        ]);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"Organization"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"Person"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"name":"LaraKit"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"name":"Siddharth Sharma"',
+            $result
+        );
+    }
+    public function test_from_array_validates_image_url(): void
+    {
+        $this->expectException(
+            \InvalidArgumentException::class
+        );
+
+        $person = new PersonSchema();
+
+        $person->fromArray([
+            'image' => 'not-a-url',
+        ]);
+    }
+    public function test_from_array_validates_same_as_url(): void
+    {
+        $this->expectException(
+            \InvalidArgumentException::class
+        );
+
+        $person = new PersonSchema();
+
+        $person->fromArray([
+            'sameAs' => 'not-a-url',
+        ]);
     }
 }
