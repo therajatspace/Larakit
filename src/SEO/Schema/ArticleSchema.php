@@ -3,6 +3,7 @@
 namespace Therajatspace\Larakit\SEO\Schema;
 use Therajatspace\Larakit\SEO\Support\UrlValidator;
 use Therajatspace\Larakit\SEO\Support\DateValidator;
+use Therajatspace\Larakit\SEO\Schema\OrganizationSchema;
 
 class ArticleSchema extends SchemaObject
 {
@@ -18,11 +19,25 @@ class ArticleSchema extends SchemaObject
         return $this;
     }
 
-    public function author(string $name): static
+    public function author(string|PersonSchema $author): static
     {
+        if ($author instanceof PersonSchema) {
+            if (!$author->hasId()) {
+                throw new \InvalidArgumentException(
+                    'The author PersonSchema must have an @id.'
+                );
+            }
+
+            $this->data['author'] = [
+                '@id' => $author->toArray()['@id'],
+            ];
+
+            return $this;
+        }
+
         $this->data['author'] = [
             '@type' => 'Person',
-            'name' => $name,
+            'name' => $author,
         ];
 
         return $this;
@@ -76,6 +91,10 @@ class ArticleSchema extends SchemaObject
             $this->author($data['author']);
         }
 
+        if (isset($data['publisher'])) {
+            $this->publisher($data['publisher']);
+        }
+
         if (isset($data['datePublished'])) {
             $this->datePublished($data['datePublished']);
         }
@@ -88,20 +107,53 @@ class ArticleSchema extends SchemaObject
             $this->image($data['image']);
         }
 
+        if (isset($data['isPartOf'])) {
+            $this->isPartOf($data['isPartOf']);
+        }
+
         return $this;
     }
-    public function publisher(string $id): static
+    public function publisher(string|OrganizationSchema $publisher): static
     {
+        if ($publisher instanceof OrganizationSchema) {
+            if (!$publisher->hasId()) {
+                throw new \InvalidArgumentException(
+                    'The publisher OrganizationSchema must have an @id.'
+                );
+            }
+
+            $this->data['publisher'] = [
+                '@id' => $publisher->toArray()['@id'],
+            ];
+
+            return $this;
+        }
+
         $this->data['publisher'] = [
-            '@id' => $id,
+            '@id' => $publisher,
         ];
 
         return $this;
     }
-    public function isPartOf(string $id): static
+
+    public function isPartOf(string|SchemaObject $entity): static
     {
+        if ($entity instanceof SchemaObject) {
+            if (!$entity->hasId()) {
+                throw new \InvalidArgumentException(
+                    'The isPartOf SchemaObject must have an @id.'
+                );
+            }
+
+            $this->data['isPartOf'] = [
+                '@id' => $entity->toArray()['@id'],
+            ];
+
+            return $this;
+        }
+
         $this->data['isPartOf'] = [
-            '@id' => $id,
+            '@id' => $entity,
         ];
 
         return $this;

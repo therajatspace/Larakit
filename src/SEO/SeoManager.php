@@ -12,6 +12,10 @@ use Therajatspace\Larakit\SEO\Schema\WebSiteSchema;
 use Illuminate\Support\Facades\Config;
 use Therajatspace\Larakit\SEO\Schema\SchemaConfigurator;
 use Therajatspace\Larakit\SEO\Schema\ProductSchema;
+use Therajatspace\Larakit\SEO\Schema\PersonSchema;
+use Therajatspace\Larakit\SEO\Schema\FAQPageSchema;
+use Therajatspace\Larakit\SEO\Schema\WebPageSchema;
+use Therajatspace\Larakit\SEO\Schema\LocalBusinessSchema;
 
 class SeoManager
 {
@@ -183,6 +187,26 @@ class SeoManager
     public function product(): ProductSchema
     {
         return $this->schema->product();
+    }
+
+    public function person(): PersonSchema
+    {
+        return $this->schema->person();
+    }
+
+    public function faqPage(): FAQPageSchema
+    {
+        return $this->schema->faqPage();
+    }
+
+    public function webPage(): WebPageSchema
+    {
+        return $this->schema->webPage();
+    }
+
+    public function localBusiness(): LocalBusinessSchema
+    {
+        return $this->schema->localBusiness();
     }
 
     protected function renderFavicon(): string

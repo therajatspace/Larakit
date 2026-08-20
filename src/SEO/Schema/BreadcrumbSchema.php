@@ -1,6 +1,7 @@
 <?php
 
 namespace Therajatspace\Larakit\SEO\Schema;
+
 use Therajatspace\Larakit\SEO\Support\UrlValidator;
 
 class BreadcrumbSchema extends SchemaObject
@@ -27,8 +28,13 @@ class BreadcrumbSchema extends SchemaObject
 
         return $this;
     }
+
     public function fromArray(array $data): static
     {
+        if (isset($data['id'])) {
+            $this->id($data['id']);
+        }
+
         if (!empty($data['items'])) {
             foreach ($data['items'] as $item) {
                 if (

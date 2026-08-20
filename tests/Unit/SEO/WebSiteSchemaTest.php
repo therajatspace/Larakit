@@ -3,10 +3,11 @@
 namespace Therajatspace\Larakit\Tests\Unit\SEO;
 
 use PHPUnit\Framework\TestCase;
-use Therajatspace\Larakit\SEO\Schema\WebSiteSchema;
-use Therajatspace\Larakit\SEO\Schema\SchemaManager;
+use Therajatspace\Larakit\SEO\Schema\OrganizationSchema;
 use Therajatspace\Larakit\SEO\Schema\SchemaContext;
+use Therajatspace\Larakit\SEO\Schema\SchemaManager;
 use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
+use Therajatspace\Larakit\SEO\Schema\WebSiteSchema;
 
 class WebSiteSchemaTest extends TestCase
 {
@@ -79,6 +80,12 @@ class WebSiteSchemaTest extends TestCase
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Publisher
+    |--------------------------------------------------------------------------
+    */
+
     public function test_website_can_reference_publisher(): void
     {
         $website = new WebSiteSchema();
@@ -91,6 +98,195 @@ class WebSiteSchemaTest extends TestCase
             [
                 '@id' => 'https://example.com/#organization',
             ],
+            $data['publisher']
+        );
+    }
+
+    public function test_publisher_accepts_organization_schema(): void
+    {
+        $organization = new OrganizationSchema();
+
+        $organization
+            ->id('https://example.com/#organization')
+            ->name('LaraKit');
+
+        $website = new WebSiteSchema();
+
+        $data = $website
+            ->publisher($organization)
+            ->toArray();
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#organization',
+            ],
+            $data['publisher']
+        );
+    }
+
+    public function test_publisher_rejects_organization_without_id(): void
+    {
+        $this->expectException(
+            \InvalidArgumentException::class
+        );
+
+        $organization = new OrganizationSchema();
+
+        $organization->name('LaraKit');
+
+        $website = new WebSiteSchema();
+
+        $website->publisher($organization);
+    }
+
+    public function test_publisher_is_fluent_with_organization_schema(): void
+    {
+        $organization = new OrganizationSchema();
+
+        $organization
+            ->id('https://example.com/#organization')
+            ->name('LaraKit');
+
+        $website = new WebSiteSchema();
+
+        $this->assertSame(
+            $website,
+            $website->publisher($organization)
+        );
+    }
+
+    public function test_publisher_can_be_replaced(): void
+    {
+        $first = new OrganizationSchema();
+
+        $first
+            ->id('https://example.com/#first-organization')
+            ->name('First Organization');
+
+        $second = new OrganizationSchema();
+
+        $second
+            ->id('https://example.com/#second-organization')
+            ->name('Second Organization');
+
+        $website = new WebSiteSchema();
+
+        $website->publisher($first);
+        $website->publisher($second);
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#second-organization',
+            ],
+            $website->toArray()['publisher']
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | fromArray
+    |--------------------------------------------------------------------------
+    */
+
+    public function test_from_array_accepts_string_publisher(): void
+    {
+        $website = new WebSiteSchema();
+
+        $data = $website
+            ->fromArray([
+                'name' => 'LaraKit',
+                'publisher' => 'https://example.com/#organization',
+            ])
+            ->toArray();
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#organization',
+            ],
+            $data['publisher']
+        );
+    }
+
+    public function test_from_array_accepts_organization_schema_as_publisher(): void
+    {
+        $organization = new OrganizationSchema();
+
+        $organization
+            ->id('https://example.com/#organization')
+            ->name('LaraKit');
+
+        $website = new WebSiteSchema();
+
+        $data = $website
+            ->fromArray([
+                'name' => 'LaraKit',
+                'publisher' => $organization,
+            ])
+            ->toArray();
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#organization',
+            ],
+            $data['publisher']
+        );
+    }
+
+    public function test_from_array_rejects_organization_without_id(): void
+    {
+        $this->expectException(
+            \InvalidArgumentException::class
+        );
+
+        $organization = new OrganizationSchema();
+
+        $organization->name('LaraKit');
+
+        $website = new WebSiteSchema();
+
+        $website->fromArray([
+            'publisher' => $organization,
+        ]);
+    }
+
+    public function test_from_array_preserves_website_type(): void
+    {
+        $website = new WebSiteSchema();
+
+        $data = $website
+            ->fromArray([
+                'name' => 'LaraKit',
+            ])
+            ->toArray();
+
+        $this->assertSame(
+            'WebSite',
+            $data['@type']
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reference integrity
+    |--------------------------------------------------------------------------
+    */
+
+    public function test_publisher_reference_does_not_have_context(): void
+    {
+        $organization = new OrganizationSchema();
+
+        $organization
+            ->id('https://example.com/#organization')
+            ->name('LaraKit');
+
+        $website = new WebSiteSchema();
+
+        $data = $website
+            ->publisher($organization)
+            ->toArray();
+
+        $this->assertArrayNotHasKey(
+            '@context',
             $data['publisher']
         );
     }

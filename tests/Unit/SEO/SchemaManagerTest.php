@@ -11,6 +11,11 @@ use Therajatspace\Larakit\SEO\Schema\PersonSchema;
 use Therajatspace\Larakit\SEO\Schema\FAQPageSchema;
 use Therajatspace\Larakit\SEO\Schema\WebPageSchema;
 use Therajatspace\Larakit\SEO\Schema\LocalBusinessSchema;
+use Therajatspace\Larakit\SEO\Schema\ArticleSchema;
+use Therajatspace\Larakit\SEO\Schema\ProductSchema;
+use Therajatspace\Larakit\SEO\Schema\OrganizationSchema;
+use Therajatspace\Larakit\SEO\Schema\WebSiteSchema;
+use Therajatspace\Larakit\SEO\Schema\BreadcrumbSchema;
 
 class SchemaManagerTest extends TestCase
 {
@@ -523,48 +528,6 @@ class SchemaManagerTest extends TestCase
             $article->toArray()
         );
     }
-
-    // public function test_person_creates_person_schema_with_page_id(): void
-    // {
-    //     $manager = app(\Therajatspace\Larakit\SEO\Schema\SchemaManager::class);
-
-    //     $person = $manager->person([
-    //         'name' => 'Siddharth Sharma',
-    //         'jobTitle' => 'Laravel Developer',
-    //     ]);
-
-    //     $data = $person->toArray();
-
-    //     $this->assertInstanceOf(
-    //         PersonSchema::class,
-    //         $person
-    //     );
-
-    //     $this->assertSame(
-    //         'Person',
-    //         $data['@type']
-    //     );
-
-    //     $this->assertSame(
-    //         'Siddharth Sharma',
-    //         $data['name']
-    //     );
-
-    //     $this->assertSame(
-    //         'Laravel Developer',
-    //         $data['jobTitle']
-    //     );
-
-    //     $this->assertArrayHasKey(
-    //         '@id',
-    //         $data
-    //     );
-
-    //     $this->assertStringContainsString(
-    //         '#person',
-    //         $data['@id']
-    //     );
-    // }
 
     public function test_person_gets_automatic_page_id(): void
     {
@@ -1259,6 +1222,1044 @@ class SchemaManagerTest extends TestCase
         $this->assertStringContainsString(
             '"@type":"LocalBusiness"',
             $result
+        );
+    }
+
+    public function test_article_can_reference_person_in_schema_graph(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $person = $manager->person([
+            'name' => 'Siddharth Sharma',
+            'jobTitle' => 'Laravel Developer',
+        ]);
+
+        $article = $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $article->author($person);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"Person"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"name":"Siddharth Sharma"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"Article"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"author":{"@id":"https://example.com/test/#person"',
+            $result
+        );
+    }
+
+    public function test_article_author_uses_reference_instead_of_duplicate_person(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $person = $manager->person([
+            'name' => 'Siddharth Sharma',
+        ]);
+
+        $article = $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $article->author($person);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"Person"'
+            )
+        );
+
+        $this->assertStringContainsString(
+            '"author":{"@id":"https://example.com/test/#person"',
+            $result
+        );
+    }
+
+    public function test_multiple_articles_can_reference_same_person(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $person = $manager->person([
+            'name' => 'Siddharth Sharma',
+        ]);
+
+        $articleOne = $manager->article([
+            'headline' => 'Laravel Basics',
+        ]);
+
+        $articleTwo = $manager->article([
+            'headline' => 'Advanced Laravel',
+        ]);
+
+        $articleOne->author($person);
+        $articleTwo->author($person);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"Person"'
+            )
+        );
+
+        $this->assertSame(
+            2,
+            substr_count(
+                $result,
+                '"author":{"@id":"https://example.com/test/#person"'
+            )
+        );
+    }
+
+
+    public function test_article_can_reference_organization_as_publisher(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $article = $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $article->publisher($organization);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"Organization"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"name":"LaraKit"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"Article"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"publisher":{"@id":"https://example.com/#organization"}',
+            $result
+        );
+    }
+
+    public function test_article_publisher_uses_reference_instead_of_duplicate_organization(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $article = $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $article->publisher($organization);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"Organization"'
+            )
+        );
+
+        $this->assertStringContainsString(
+            '"publisher":{"@id":"https://example.com/#organization"}',
+            $result
+        );
+    }
+
+    public function test_multiple_articles_can_reference_same_publisher(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $articleOne = $manager->article([
+            'headline' => 'Laravel Basics',
+        ]);
+
+        $articleTwo = $manager->article([
+            'headline' => 'Advanced Laravel',
+        ]);
+
+        $articleTwo->id(
+            'https://example.com/test/#article-two'
+        );
+
+        $articleOne->publisher($organization);
+        $articleTwo->publisher($organization);
+
+        $result = $manager->render();
+
+        preg_match(
+            '/<script type="application\/ld\+json">(.*?)<\/script>/s',
+            $result,
+            $matches
+        );
+
+        $this->assertNotEmpty($matches);
+
+        $data = json_decode(
+            $matches[1],
+            true
+        );
+
+        $this->assertSame(
+            JSON_ERROR_NONE,
+            json_last_error()
+        );
+
+        $this->assertArrayHasKey(
+            '@graph',
+            $data
+        );
+
+        $organizations = array_values(
+            array_filter(
+                $data['@graph'],
+                fn(array $node) =>
+                ($node['@type'] ?? null) === 'Organization'
+            )
+        );
+
+        $articles = array_values(
+            array_filter(
+                $data['@graph'],
+                fn(array $node) =>
+                ($node['@type'] ?? null) === 'Article'
+            )
+        );
+
+        $this->assertCount(
+            1,
+            $organizations
+        );
+
+        $this->assertCount(
+            2,
+            $articles
+        );
+
+        $this->assertSame(
+            'https://example.com/#organization',
+            $organizations[0]['@id']
+        );
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#organization',
+            ],
+            $articles[0]['publisher']
+        );
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#organization',
+            ],
+            $articles[1]['publisher']
+        );
+    }
+
+    public function test_article_automatic_publisher_relationship_still_works(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"Organization"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"Article"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"publisher":{"@id":"https://example.com/#organization"}',
+            $result
+        );
+    }
+
+    public function test_web_page_can_reference_website(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $website = $manager->website([
+            'name' => 'LaraKit',
+        ]);
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('webpage'))
+            ->name('About Us');
+
+        $page->isPartOf($website);
+
+        $this->assertSame(
+            [
+                '@id' => $website->toArray()['@id'],
+            ],
+            $page->toArray()['isPartOf']
+        );
+    }
+
+    public function test_web_page_website_relationship_is_rendered(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $website = $manager->website([
+            'name' => 'LaraKit',
+        ]);
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('webpage'))
+            ->name('About Us');
+
+        $page->isPartOf($website);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"WebSite"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"WebPage"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"isPartOf":{"@id":"https://example.com/#website"}',
+            $result
+        );
+    }
+
+    public function test_web_page_references_existing_website_without_duplication(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $website = $manager->website([
+            'name' => 'LaraKit',
+        ]);
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('webpage'))
+            ->name('About Us');
+
+        $page->isPartOf($website);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"WebSite"'
+            )
+        );
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"WebPage"'
+            )
+        );
+
+        $this->assertStringContainsString(
+            '"isPartOf":{"@id":"https://example.com/#website"}',
+            $result
+        );
+    }
+
+    public function test_multiple_web_pages_can_reference_same_website(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $website = $manager->website([
+            'name' => 'LaraKit',
+        ]);
+
+        $pageOne = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('about'))
+            ->name('About Us');
+
+        $pageTwo = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('contact'))
+            ->name('Contact Us');
+
+        $pageOne->isPartOf($website);
+        $pageTwo->isPartOf($website);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"WebSite"'
+            )
+        );
+
+        $this->assertSame(
+            2,
+            substr_count(
+                $result,
+                '"@type":"WebPage"'
+            )
+        );
+
+        $this->assertSame(
+            2,
+            substr_count(
+                $result,
+                '"isPartOf":{"@id":"https://example.com/#website"}'
+            )
+        );
+    }
+
+    public function test_website_organization_relationship_still_works_with_web_page(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $website = $manager->website([
+            'name' => 'LaraKit',
+        ]);
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('webpage'))
+            ->name('About Us');
+
+        $page->isPartOf($website);
+
+        $manager->render();
+
+        $this->assertSame(
+            [
+                '@id' => $organization->toArray()['@id'],
+            ],
+            $website->toArray()['publisher']
+        );
+
+        $this->assertSame(
+            [
+                '@id' => $website->toArray()['@id'],
+            ],
+            $page->toArray()['isPartOf']
+        );
+    }
+
+    public function test_web_page_can_reference_article_as_main_entity(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $article = $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('webpage'))
+            ->name('Laravel Article');
+
+        $page->mainEntity($article);
+
+        $this->assertSame(
+            [
+                '@id' => $article->toArray()['@id'],
+            ],
+            $page->toArray()['mainEntity']
+        );
+    }
+
+    public function test_web_page_can_reference_product_as_main_entity(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $product = $manager->product([
+            'name' => 'LaraKit Pro',
+        ]);
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('product-page'))
+            ->name('LaraKit Pro');
+
+        $page->mainEntity($product);
+
+        $this->assertSame(
+            [
+                '@id' => $product->toArray()['@id'],
+            ],
+            $page->toArray()['mainEntity']
+        );
+    }
+
+    public function test_web_page_main_entity_relationship_is_rendered(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $article = $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('webpage'))
+            ->name('Laravel Article');
+
+        $page->mainEntity($article);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"Article"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"WebPage"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"mainEntity":{"@id":"https://example.com/test/#article"}',
+            $result
+        );
+    }
+
+    public function test_web_page_main_entity_uses_reference_without_duplicate_article(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $article = $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('webpage'))
+            ->name('Laravel Article');
+
+        $page->mainEntity($article);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"Article"'
+            )
+        );
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"WebPage"'
+            )
+        );
+
+        $this->assertStringContainsString(
+            '"mainEntity":{"@id":"https://example.com/test/#article"}',
+            $result
+        );
+    }
+
+    public function test_multiple_web_pages_can_reference_same_main_entity(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $article = $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $pageOne = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('article-page'))
+            ->name('Article Page');
+
+        $pageTwo = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('featured-article'))
+            ->name('Featured Article');
+
+        $pageOne->mainEntity($article);
+        $pageTwo->mainEntity($article);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"Article"'
+            )
+        );
+
+        $this->assertSame(
+            2,
+            substr_count(
+                $result,
+                '"@type":"WebPage"'
+            )
+        );
+
+        $this->assertSame(
+            2,
+            substr_count(
+                $result,
+                '"mainEntity":{"@id":"https://example.com/test/#article"}'
+            )
+        );
+    }
+
+    public function test_website_can_reference_organization_as_publisher(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $website = $manager->website([
+            'name' => 'LaraKit',
+        ]);
+
+        $website->publisher($organization);
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#organization',
+            ],
+            $website->toArray()['publisher']
+        );
+    }
+
+    public function test_website_publisher_relationship_is_rendered(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $website = $manager->website([
+            'name' => 'LaraKit',
+        ]);
+
+        $website->publisher($organization);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"Organization"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"WebSite"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"publisher":{"@id":"https://example.com/#organization"}',
+            $result
+        );
+    }
+
+    public function test_website_publisher_uses_reference_without_duplicate_organization(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $website = $manager->website([
+            'name' => 'LaraKit',
+        ]);
+
+        $website->publisher($organization);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"Organization"'
+            )
+        );
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"WebSite"'
+            )
+        );
+
+        $this->assertStringContainsString(
+            '"publisher":{"@id":"https://example.com/#organization"}',
+            $result
+        );
+    }
+
+    public function test_multiple_websites_can_reference_same_publisher(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $organization = $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $websiteOne = $manager->website([
+            'name' => 'LaraKit Main',
+        ]);
+
+        $websiteTwo = $manager->create(WebSiteSchema::class)
+            ->id('https://example.com/#second-website')
+            ->name('LaraKit Docs');
+
+        $websiteOne->publisher($organization);
+        $websiteTwo->publisher($organization);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"Organization"'
+            )
+        );
+
+        $this->assertSame(
+            2,
+            substr_count(
+                $result,
+                '"@type":"WebSite"'
+            )
+        );
+
+        $this->assertSame(
+            2,
+            substr_count(
+                $result,
+                '"publisher":{"@id":"https://example.com/#organization"}'
+            )
+        );
+    }
+
+    public function test_web_page_can_reference_breadcrumb(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $breadcrumb = $manager
+            ->breadcrumbs()
+            ->id('https://example.com/#breadcrumb')
+            ->item(
+                'Home',
+                'https://example.com'
+            )
+            ->item(
+                'Blog',
+                'https://example.com/blog'
+            );
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('blog'))
+            ->name('Blog');
+
+        $page->breadcrumb($breadcrumb);
+
+        $this->assertSame(
+            [
+                '@id' => 'https://example.com/#breadcrumb',
+            ],
+            $page->toArray()['breadcrumb']
+        );
+    }
+
+    public function test_web_page_breadcrumb_relationship_is_rendered(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $breadcrumb = $manager
+            ->breadcrumbs()
+            ->id('https://example.com/#breadcrumb')
+            ->item(
+                'Home',
+                'https://example.com'
+            )
+            ->item(
+                'Blog',
+                'https://example.com/blog'
+            );
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('blog'))
+            ->name('Blog');
+
+        $page->breadcrumb($breadcrumb);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"BreadcrumbList"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"WebPage"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"breadcrumb":{"@id":"https://example.com/#breadcrumb"}',
+            $result
+        );
+    }
+
+    public function test_web_page_breadcrumb_uses_reference_without_duplicate_breadcrumb_list(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $breadcrumb = $manager
+            ->breadcrumbs()
+            ->id('https://example.com/#breadcrumb')
+            ->item(
+                'Home',
+                'https://example.com'
+            );
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id($manager->pageId('blog'))
+            ->name('Blog');
+
+        $page->breadcrumb($breadcrumb);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"BreadcrumbList"'
+            )
+        );
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"WebPage"'
+            )
+        );
+
+        $this->assertStringContainsString(
+            '"breadcrumb":{"@id":"https://example.com/#breadcrumb"}',
+            $result
+        );
+    }
+
+    public function test_article_can_reference_web_page_as_is_part_of(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $article = $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id('https://example.com/test/#webpage')
+            ->name('Understanding Laravel');
+
+        $article->isPartOf($page);
+
+        $this->assertSame(
+            [
+                '@id' => $page->toArray()['@id'],
+            ],
+            $article->toArray()['isPartOf']
+        );
+    }
+
+    public function test_article_web_page_relationship_is_rendered(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $article = $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id('https://example.com/test/#webpage')
+            ->name('Understanding Laravel');
+
+        $article->isPartOf($page);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"Article"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"WebPage"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"isPartOf":{"@id":"https://example.com/test/#webpage"}',
+            $result
+        );
+    }
+
+    public function test_article_is_part_of_uses_web_page_reference_without_duplication(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $article = $manager->article([
+            'headline' => 'Understanding Laravel',
+        ]);
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id('https://example.com/test/#webpage')
+            ->name('Understanding Laravel');
+
+        $article->isPartOf($page);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"Article"'
+            )
+        );
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"WebPage"'
+            )
+        );
+
+        $this->assertStringContainsString(
+            '"isPartOf":{"@id":"https://example.com/test/#webpage"}',
+            $result
+        );
+    }
+
+    public function test_multiple_articles_can_reference_same_web_page(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $page = $manager
+            ->create(WebPageSchema::class)
+            ->id('https://example.com/test/#webpage')
+            ->name('Laravel Articles');
+
+        $articleOne = $manager->article([
+            'headline' => 'Laravel Basics',
+        ]);
+
+        $articleTwo = $manager->create(ArticleSchema::class)
+            ->id('https://example.com/#article-two')
+            ->headline('Advanced Laravel');
+
+        $articleOne->isPartOf($page);
+        $articleTwo->isPartOf($page);
+
+        $result = $manager->render();
+
+        $this->assertSame(
+            2,
+            substr_count(
+                $result,
+                '"@type":"Article"'
+            )
+        );
+
+        $this->assertSame(
+            1,
+            substr_count(
+                $result,
+                '"@type":"WebPage"'
+            )
+        );
+
+        $this->assertSame(
+            2,
+            substr_count(
+                $result,
+                '"isPartOf":{"@id":"https://example.com/test/#webpage"}'
+            )
         );
     }
 }

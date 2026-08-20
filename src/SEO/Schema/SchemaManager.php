@@ -182,51 +182,56 @@ class SchemaManager
 
         return null;
     }
-    protected function buildAutomaticRelationships(): void
-    {
-        $organization = $this->findByType('Organization');
-        $website = $this->findByType('WebSite');
-        $article = $this->findByType('Article');
 
-        if (
-            $organization &&
-            $website &&
-            isset($organization->toArray()['@id']) &&
-            isset($website->toArray()['@id'])
-        ) {
-            $this->connect(
-                $website,
-                'publisher',
-                $organization
-            );
-        }
+    ////////////////////////////////////////////
+    // ============= TO BE DELETED =============
+    ///////////////////////////////////////////
 
-        if (
-            $organization &&
-            $article &&
-            isset($organization->toArray()['@id']) &&
-            isset($article->toArray()['@id'])
-        ) {
-            $this->connect(
-                $article,
-                'publisher',
-                $organization
-            );
-        }
+    // protected function buildAutomaticRelationships(): void
+    // {
+    //     $organization = $this->findByType('Organization');
+    //     $website = $this->findByType('WebSite');
+    //     $article = $this->findByType('Article');
 
-        if (
-            $website &&
-            $article &&
-            isset($website->toArray()['@id']) &&
-            isset($article->toArray()['@id'])
-        ) {
-            $this->connect(
-                $article,
-                'isPartOf',
-                $website
-            );
-        }
-    }
+    //     if (
+    //         $organization &&
+    //         $website &&
+    //         isset($organization->toArray()['@id']) &&
+    //         isset($website->toArray()['@id'])
+    //     ) {
+    //         $this->connect(
+    //             $website,
+    //             'publisher',
+    //             $organization
+    //         );
+    //     }
+
+    //     if (
+    //         $organization &&
+    //         $article &&
+    //         isset($organization->toArray()['@id']) &&
+    //         isset($article->toArray()['@id'])
+    //     ) {
+    //         $this->connect(
+    //             $article,
+    //             'publisher',
+    //             $organization
+    //         );
+    //     }
+
+    //     if (
+    //         $website &&
+    //         $article &&
+    //         isset($website->toArray()['@id']) &&
+    //         isset($article->toArray()['@id'])
+    //     ) {
+    //         $this->connect(
+    //             $article,
+    //             'isPartOf',
+    //             $website
+    //         );
+    //     }
+    // }
 
     public function render(): string
     {

@@ -4,6 +4,8 @@ namespace Therajatspace\Larakit\SEO\Schema;
 
 use Therajatspace\Larakit\SEO\Support\DateValidator;
 use Therajatspace\Larakit\SEO\Support\UrlValidator;
+use Therajatspace\Larakit\SEO\Schema\WebSiteSchema;
+use Therajatspace\Larakit\SEO\Schema\BreadcrumbSchema;
 
 class WebPageSchema extends SchemaObject
 {
@@ -46,24 +48,51 @@ class WebPageSchema extends SchemaObject
         return $this;
     }
 
-    public function isPartOf(string $id): static
+    public function isPartOf(string|WebSiteSchema $website): static
     {
+        if ($website instanceof WebSiteSchema) {
+            if (!$website->hasId()) {
+                throw new \InvalidArgumentException(
+                    'The isPartOf WebSiteSchema must have an @id.'
+                );
+            }
+
+            $this->data['isPartOf'] = [
+                '@id' => $website->toArray()['@id'],
+            ];
+
+            return $this;
+        }
+
         $this->data['isPartOf'] = [
-            '@id' => $id,
+            '@id' => $website,
         ];
 
         return $this;
     }
 
-    public function mainEntity(string $id): static
+    public function mainEntity(string|SchemaObject $entity): static
     {
+        if ($entity instanceof SchemaObject) {
+            if (!$entity->hasId()) {
+                throw new \InvalidArgumentException(
+                    'The mainEntity SchemaObject must have an @id.'
+                );
+            }
+
+            $this->data['mainEntity'] = [
+                '@id' => $entity->toArray()['@id'],
+            ];
+
+            return $this;
+        }
+
         $this->data['mainEntity'] = [
-            '@id' => $id,
+            '@id' => $entity,
         ];
 
         return $this;
     }
-
     public function primaryImageOfPage(string $id): static
     {
         $this->data['primaryImageOfPage'] = [
@@ -116,6 +145,33 @@ class WebPageSchema extends SchemaObject
                 $data['primaryImageOfPage']
             );
         }
+
+        if (isset($data['breadcrumb'])) {
+            $this->breadcrumb($data['breadcrumb']);
+        }
+
+        return $this;
+    }
+
+    public function breadcrumb(string|BreadcrumbSchema $breadcrumb): static
+    {
+        if ($breadcrumb instanceof BreadcrumbSchema) {
+            if (!$breadcrumb->hasId()) {
+                throw new \InvalidArgumentException(
+                    'The breadcrumb BreadcrumbSchema must have an @id.'
+                );
+            }
+
+            $this->data['breadcrumb'] = [
+                '@id' => $breadcrumb->toArray()['@id'],
+            ];
+
+            return $this;
+        }
+
+        $this->data['breadcrumb'] = [
+            '@id' => $breadcrumb,
+        ];
 
         return $this;
     }

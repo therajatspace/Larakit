@@ -8,6 +8,7 @@ class WebSiteSchema extends SchemaObject
     {
         $this->data['@type'] = 'WebSite';
     }
+
     public function fromArray(array $data): static
     {
         if (isset($data['name'])) {
@@ -22,12 +23,31 @@ class WebSiteSchema extends SchemaObject
             $this->description($data['description']);
         }
 
+        if (isset($data['publisher'])) {
+            $this->publisher($data['publisher']);
+        }
+
         return $this;
     }
-    public function publisher(string $id): static
+
+    public function publisher(string|OrganizationSchema $publisher): static
     {
+        if ($publisher instanceof OrganizationSchema) {
+            if (!$publisher->hasId()) {
+                throw new \InvalidArgumentException(
+                    'The publisher OrganizationSchema must have an @id.'
+                );
+            }
+
+            $this->data['publisher'] = [
+                '@id' => $publisher->toArray()['@id'],
+            ];
+
+            return $this;
+        }
+
         $this->data['publisher'] = [
-            '@id' => $id,
+            '@id' => $publisher,
         ];
 
         return $this;
