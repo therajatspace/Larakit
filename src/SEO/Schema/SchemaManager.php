@@ -10,6 +10,7 @@ use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
 use Therajatspace\Larakit\SEO\Schema\PersonSchema;
 use Therajatspace\Larakit\SEO\Schema\FAQPageSchema;
 use Therajatspace\Larakit\SEO\Schema\WebPageSchema;
+use Therajatspace\Larakit\SEO\Schema\LocalBusinessSchema;
 
 class SchemaManager
 {
@@ -115,6 +116,15 @@ class SchemaManager
         return $this
             ->create(WebPageSchema::class)
             ->id($this->pageId('webpage'))
+            ->fromArray($data);
+    }
+
+    public function localBusiness(
+        array $data = []
+    ): LocalBusinessSchema {
+        return $this
+            ->create(LocalBusinessSchema::class)
+            ->id($this->pageId('localbusiness'))
             ->fromArray($data);
     }
 

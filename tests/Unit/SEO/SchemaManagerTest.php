@@ -10,6 +10,7 @@ use Therajatspace\Larakit\SEO\Schema\SchemaRelationshipResolver;
 use Therajatspace\Larakit\SEO\Schema\PersonSchema;
 use Therajatspace\Larakit\SEO\Schema\FAQPageSchema;
 use Therajatspace\Larakit\SEO\Schema\WebPageSchema;
+use Therajatspace\Larakit\SEO\Schema\LocalBusinessSchema;
 
 class SchemaManagerTest extends TestCase
 {
@@ -1077,6 +1078,186 @@ class SchemaManagerTest extends TestCase
 
         $this->assertStringContainsString(
             '"@type":"WebPage"',
+            $result
+        );
+    }
+
+    public function test_local_business_gets_automatic_page_id(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $business = $manager->localBusiness([
+            'name' => 'Lara Cafe',
+        ]);
+
+        $this->assertSame(
+            'https://example.com/test/#localbusiness',
+            $business->toArray()['@id']
+        );
+    }
+
+    public function test_manager_can_create_local_business(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $business = $manager->localBusiness([
+            'name' => 'Lara Cafe',
+            'telephone' => '+91-9876543210',
+            'address' => [
+                'streetAddress' => '123 Main Street',
+                'addressLocality' => 'Pune',
+                'addressRegion' => 'Maharashtra',
+                'postalCode' => '411001',
+                'addressCountry' => 'IN',
+            ],
+        ]);
+
+        $this->assertInstanceOf(
+            LocalBusinessSchema::class,
+            $business
+        );
+
+        $this->assertSame(
+            'LocalBusiness',
+            $business->toArray()['@type']
+        );
+
+        $this->assertSame(
+            'Lara Cafe',
+            $business->toArray()['name']
+        );
+    }
+
+    public function test_local_business_is_rendered_in_graph(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $manager->localBusiness([
+            'name' => 'Lara Cafe',
+            'url' => 'https://example.com',
+            'telephone' => '+91-9876543210',
+        ]);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"LocalBusiness"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"name":"Lara Cafe"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@id":"https://example.com/test/#localbusiness"',
+            $result
+        );
+    }
+
+    public function test_local_business_produces_valid_json_structure(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $manager->localBusiness([
+            'name' => 'Lara Cafe',
+            'address' => [
+                'streetAddress' => '123 Main Street',
+                'addressLocality' => 'Pune',
+                'addressRegion' => 'Maharashtra',
+                'postalCode' => '411001',
+                'addressCountry' => 'IN',
+            ],
+            'geo' => [
+                'latitude' => 18.5204,
+                'longitude' => 73.8567,
+            ],
+        ]);
+
+        $result = $manager->render();
+
+        preg_match(
+            '/<script type="application\/ld\+json">(.*?)<\/script>/s',
+            $result,
+            $matches
+        );
+
+        $this->assertNotEmpty($matches);
+
+        $data = json_decode(
+            $matches[1],
+            true
+        );
+
+        $this->assertSame(
+            JSON_ERROR_NONE,
+            json_last_error()
+        );
+
+        $business = null;
+
+        foreach ($data['@graph'] as $node) {
+            if (($node['@type'] ?? null) === 'LocalBusiness') {
+                $business = $node;
+                break;
+            }
+        }
+
+        $this->assertNotNull($business);
+
+        $this->assertSame(
+            'LocalBusiness',
+            $business['@type']
+        );
+
+        $this->assertSame(
+            'https://example.com/test/#localbusiness',
+            $business['@id']
+        );
+
+        $this->assertSame(
+            'Lara Cafe',
+            $business['name']
+        );
+
+        $this->assertSame(
+            'PostalAddress',
+            $business['address']['@type']
+        );
+
+        $this->assertSame(
+            'Pune',
+            $business['address']['addressLocality']
+        );
+
+        $this->assertSame(
+            'GeoCoordinates',
+            $business['geo']['@type']
+        );
+    }
+
+    public function test_local_business_can_coexist_with_other_schemas(): void
+    {
+        $manager = $this->createSchemaManager();
+
+        $manager->organization([
+            'name' => 'LaraKit',
+        ]);
+
+        $manager->localBusiness([
+            'name' => 'Lara Cafe',
+        ]);
+
+        $result = $manager->render();
+
+        $this->assertStringContainsString(
+            '"@type":"Organization"',
+            $result
+        );
+
+        $this->assertStringContainsString(
+            '"@type":"LocalBusiness"',
             $result
         );
     }
