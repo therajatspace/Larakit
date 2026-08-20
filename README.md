@@ -932,6 +932,8 @@ Output:
 }
 ```
 
+## Breadcrumbs
+
 Automatically uses `"@type": "BreadcrumbList"`.
 
 ```php
