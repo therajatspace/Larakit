@@ -8,6 +8,11 @@
       "Therajatspace\\Larakit\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Therajatspace\\Larakit\\Tests\\": "tests/"
+    }
+  },
   "authors": [
     {
       "name": "Siddharth Sharma"
@@ -19,7 +24,8 @@
     "illuminate/support": "^13.25",
     "illuminate/view": "^13.25",
     "illuminate/console": "^13.25",
-    "laravel/prompts": "^0.3"
+    "laravel/prompts": "^0.3",
+    "spatie/laravel-permission": "^8.0"
   },
   "extra": {
     "laravel": {

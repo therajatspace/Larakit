@@ -14,6 +14,9 @@ use Therajatspace\Larakit\SEO\SeoManager;
 use Therajatspace\Larakit\SEO\Twitter\TwitterCardManager;
 use Therajatspace\Larakit\Console\Commands\LaraKitInstall;
 
+use Therajatspace\Larakit\Auth\AuthServiceProvider;
+use Therajatspace\Larakit\Auth\AuthRouteRegistrar;
+
 class LaraKitServiceProvider extends ServiceProvider
 {
     public function register()
@@ -22,6 +25,8 @@ class LaraKitServiceProvider extends ServiceProvider
             __DIR__ . '/../config/larakit.php',
             'larakit'
         );
+
+        $this->app->register(AuthServiceProvider::class);
 
         /*
         |--------------------------------------------------------------------------
@@ -96,9 +101,11 @@ class LaraKitServiceProvider extends ServiceProvider
                 );
             }
         );
+
+
     }
 
-    public function boot()
+    public function boot(): void
     {
         if (
             $this->app->runningInConsole() &&
@@ -116,5 +123,7 @@ class LaraKitServiceProvider extends ServiceProvider
         Blade::directive('seo', function () {
             return "<?php echo app(\Therajatspace\Larakit\SEO\SeoManager::class)->render(); ?>";
         });
+
+        app(AuthRouteRegistrar::class)->register();
     }
 }
