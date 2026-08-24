@@ -36,6 +36,14 @@ use Therajatspace\Larakit\Auth\Contracts\LoginRateLimiterContract;
 
 use Therajatspace\Larakit\Auth\AuthRouteRegistrar;
 
+
+use Therajatspace\Larakit\Auth\Password\PasswordResetValidator;
+use Therajatspace\Larakit\Auth\Password\PasswordResetService;
+use Therajatspace\Larakit\Auth\Contracts\PasswordResetServiceContract;
+use Therajatspace\Larakit\Auth\Verification\EmailVerificationService;
+use Therajatspace\Larakit\Auth\Contracts\EmailVerificationServiceContract;
+use Therajatspace\Larakit\Auth\Contracts\PasswordConfirmationServiceContract;
+use Therajatspace\Larakit\Auth\Password\PasswordConfirmationService;
 class AuthServiceProvider extends ServiceProvider
 {
     public function register(): void
@@ -182,6 +190,49 @@ class AuthServiceProvider extends ServiceProvider
 
         $this->app->singleton(
             AuthRouteRegistrar::class
+        );
+
+
+        $this->app->singleton(
+            PasswordResetValidator::class
+        );
+
+        $this->app->singleton(
+            PasswordResetServiceContract::class,
+            PasswordResetService::class
+        );
+
+        $this->app->singleton(
+            PasswordResetService::class
+        );
+
+        $this->app->singleton(
+            EmailVerificationServiceContract::class,
+            EmailVerificationService::class
+        );
+
+        $this->app->singleton(
+            EmailVerificationService::class
+        );
+
+        $this->app->singleton(
+            PasswordConfirmationServiceContract::class,
+            function ($app) {
+                return new PasswordConfirmationService(
+                    $app['auth']->guard(),
+                    $app->make('request')
+                );
+            }
+        );
+
+        $this->app->singleton(
+            PasswordConfirmationService::class,
+            function ($app) {
+                return new PasswordConfirmationService(
+                    $app['auth']->guard(),
+                    $app->make('request')
+                );
+            }
         );
     }
 

@@ -64,17 +64,12 @@ return [
         'profiles' => [],
 
         'delegation' => [
-
             'enabled' => true,
-
             'roles' => [],
-
             'permissions' => [],
-
         ],
 
         'rate_limit' => [
-
             'enabled' => true,
 
             'account' => [
@@ -86,9 +81,24 @@ return [
                 'max_attempts' => 30,
                 'decay_seconds' => 60,
             ],
-
         ],
 
+        'password_reset' => [
+            'enabled' => true,
+            'broker' => null,
+        ],
+
+        'email_verification' => [
+
+            'enabled' => true,
+
+            'route_mode' => 'dedicated',
+
+            'expiration' => 60,
+
+            'throttle' => 60,
+
+        ],
     ],
 
 ];
