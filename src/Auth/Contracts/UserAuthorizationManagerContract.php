@@ -26,6 +26,14 @@ interface UserAuthorizationManagerContract
         string $role
     ): bool;
 
+    public function supportsRoles(
+        Authenticatable $user
+    ): bool;
+
+    public function roles(
+        Authenticatable $user
+    ): array;
+
     public function givePermission(
         Authenticatable $user,
         string $permission
@@ -45,4 +53,12 @@ interface UserAuthorizationManagerContract
         Authenticatable $user,
         string $permission
     ): bool;
+
+    public function supportsPermissions(
+        Authenticatable $user
+    ): bool;
+
+    public function permissions(
+        Authenticatable $user
+    ): array;
 }

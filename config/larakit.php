@@ -101,4 +101,93 @@ return [
         ],
     ],
 
+    'admin' => [
+
+        'enabled' => true,
+
+        'route_prefix' => 'admin',
+
+        'middleware' => [
+            'web',
+        ],
+
+        'access' => [
+
+            'permission' => 'admin.access',
+
+        ],
+
+        'users' => [
+
+            'account' => [
+
+                'driver' => null,
+
+                'status_attribute' => null,
+
+            ],
+
+            'password' => [
+
+                'state_driver' => null,
+
+                'force_change_attribute' => null,
+
+            ],
+
+            'listing' => [
+
+                'searchable' => [
+                    'name',
+                    'email',
+                ],
+
+                'sortable' => [
+                    'id',
+                    'name',
+                    'email',
+                    'created_at',
+                    'updated_at',
+                ],
+
+                'default_sort' => 'created_at',
+
+                'default_direction' => 'desc',
+
+                'per_page' => 25,
+
+                'max_per_page' => 100,
+
+            ],
+
+            'identity' => [
+
+                'display_name_attribute' => 'name',
+
+                'email_attribute' => 'email',
+
+            ],
+
+        ],
+
+        'modules' => [
+
+            'dashboard' => true,
+
+            'users' => true,
+
+            'authorization' => true,
+
+            'website_health' => true,
+
+            'seo_health' => true,
+
+            'traffic' => true,
+
+            'audit' => true,
+
+        ],
+
+    ],
+
 ];

@@ -60,9 +60,39 @@ class UserAuthorizationManager implements UserAuthorizationManagerContract
     ): bool {
         $this->ensureSupportedUser($user);
 
-        return $user->hasRole(
-            trim($role)
-        );
+        $role = trim($role);
+
+        if ($role === '') {
+            return false;
+        }
+
+        return $user->hasRole($role);
+    }
+
+    public function supportsRoles(
+        Authenticatable $user
+    ): bool {
+        return $this->hasRolesTrait($user);
+    }
+
+    public function roles(
+        Authenticatable $user
+    ): array {
+        $this->ensureSupportedUser($user);
+
+        return $user
+            ->getRoleNames()
+            ->map(
+                static fn ($role): string => trim(
+                    (string) $role
+                )
+            )
+            ->filter(
+                static fn (string $role): bool => $role !== ''
+            )
+            ->unique()
+            ->values()
+            ->all();
     }
 
     public function givePermission(
@@ -118,9 +148,50 @@ class UserAuthorizationManager implements UserAuthorizationManagerContract
     ): bool {
         $this->ensureSupportedUser($user);
 
+        $permission = trim($permission);
+
+        if ($permission === '') {
+            return false;
+        }
+
         return $user->hasPermissionTo(
-            trim($permission)
+            $permission
         );
+    }
+
+    public function supportsPermissions(
+        Authenticatable $user
+    ): bool {
+        return $this->hasRolesTrait($user);
+    }
+
+    public function permissions(
+        Authenticatable $user
+    ): array {
+        $this->ensureSupportedUser($user);
+
+        /*
+         * getAllPermissions() is intentionally used instead of
+         * getDirectPermissions().
+         *
+         * The Admin Panel needs to know what the user can actually
+         * do, including permissions inherited from assigned roles.
+         */
+        return $user
+            ->getAllPermissions()
+            ->pluck('name')
+            ->map(
+                static fn ($permission): string => trim(
+                    (string) $permission
+                )
+            )
+            ->filter(
+                static fn (string $permission): bool =>
+                    $permission !== ''
+            )
+            ->unique()
+            ->values()
+            ->all();
     }
 
     protected function normalizeList(
@@ -130,27 +201,32 @@ class UserAuthorizationManager implements UserAuthorizationManagerContract
             array_unique(
                 array_filter(
                     array_map(
-                        static fn ($value) => trim((string) $value),
+                        static fn ($value): string => trim(
+                            (string) $value
+                        ),
                         $values
                     ),
-                    static fn ($value) => $value !== ''
+                    static fn ($value): bool =>
+                        $value !== ''
                 )
             )
+        );
+    }
+
+    protected function hasRolesTrait(
+        Authenticatable $user
+    ): bool {
+        return in_array(
+            HasRoles::class,
+            class_uses_recursive($user),
+            true
         );
     }
 
     protected function ensureSupportedUser(
         Authenticatable $user
     ): void {
-        $traits = class_uses_recursive(
-            $user
-        );
-
-        if (!in_array(
-            HasRoles::class,
-            $traits,
-            true
-        )) {
+        if (!$this->hasRolesTrait($user)) {
             throw new InvalidArgumentException(
                 'The authenticated user model must use Spatie\\Permission\\Traits\\HasRoles.'
             );

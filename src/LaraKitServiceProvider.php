@@ -17,6 +17,8 @@ use Therajatspace\Larakit\Console\Commands\LaraKitInstall;
 use Therajatspace\Larakit\Auth\AuthServiceProvider;
 use Therajatspace\Larakit\Auth\AuthRouteRegistrar;
 
+use Therajatspace\Larakit\Admin\AdminServiceProvider;
+
 class LaraKitServiceProvider extends ServiceProvider
 {
     public function register()
@@ -27,6 +29,7 @@ class LaraKitServiceProvider extends ServiceProvider
         );
 
         $this->app->register(AuthServiceProvider::class);
+        $this->app->register(AdminServiceProvider::class);
 
         /*
         |--------------------------------------------------------------------------
